@@ -7,7 +7,9 @@ Agent-oriented codebase-memory-mcp CLI written in Go. It wraps the installed `co
 Requires the upstream `codebase-memory-mcp` binary on `PATH`.
 
 ```sh
-go install github.com/nikolauska/codebase-memory-mcp-axi@latest
+git clone https://github.com/nikolauska/codebase-memory-mcp-axi.git
+cd codebase-memory-mcp-axi
+make install
 cbm-axi setup
 ```
 
