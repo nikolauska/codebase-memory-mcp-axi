@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.1.1] - 2026-07-10
+
+### Added
+
+- Added project-specific `AGENTS.md` and `CLAUDE.md` guidance for repository agents.
+
 ## [0.1.0] - 2026-07-10
 
 ### Added
