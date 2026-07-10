@@ -42,6 +42,10 @@ var runBackend = executeBackend
 func main() { os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	if len(args) == 1 && args[0] == "--print-skill" {
+		fmt.Fprint(stdout, skillContent)
+		return 0
+	}
 	if has(args, "--version") || has(args, "-v") || has(args, "-V") {
 		fmt.Fprintln(stdout, "version: "+version)
 		return 0
@@ -589,8 +593,12 @@ func hookCommandPath() (string, error) {
 		return "", err
 	}
 	if name := filepath.Base(executable); name != "" {
-		if _, err := exec.LookPath(name); err == nil {
-			return name, nil
+		if found, err := exec.LookPath(name); err == nil {
+			exePath, _ := filepath.EvalSymlinks(executable)
+			foundPath, _ := filepath.EvalSymlinks(found)
+			if exePath != "" && exePath == foundPath {
+				return name, nil
+			}
 		}
 	}
 	return executable, nil

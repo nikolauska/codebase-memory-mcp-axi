@@ -74,3 +74,35 @@ func TestUsageErrorsUseExitCodeTwo(t *testing.T) {
 		t.Fatalf("unexpected output: %s", stdout.String())
 	}
 }
+
+func TestSetupIsIdempotent(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	var first, second bytes.Buffer
+	if code := setupCommand([]string{"--agent", "all"}, &first); code != 0 {
+		t.Fatalf("first setup exit code %d: %s", code, first.String())
+	}
+	if code := setupCommand([]string{"--agent", "all"}, &second); code != 0 {
+		t.Fatalf("second setup exit code %d: %s", code, second.String())
+	}
+	if !strings.Contains(second.String(), "unchanged") {
+		t.Fatalf("expected idempotent setup, got: %s", second.String())
+	}
+}
+
+func TestToolHelpDelegatesToBackend(t *testing.T) {
+	previous := runBackend
+	t.Cleanup(func() { runBackend = previous })
+	runBackend = func(args []string) ([]byte, []byte, error) {
+		if strings.Join(args, " ") != "cli search_graph --help" {
+			t.Fatalf("unexpected backend args: %v", args)
+		}
+		return []byte("Usage: backend help\n"), nil, nil
+	}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"search_graph", "--help"}, strings.NewReader(""), &stdout, &stderr); code != 0 {
+		t.Fatalf("exit code %d: %s", code, stdout.String())
+	}
+	if stdout.String() != "Usage: backend help\n" {
+		t.Fatalf("unexpected help: %q", stdout.String())
+	}
+}

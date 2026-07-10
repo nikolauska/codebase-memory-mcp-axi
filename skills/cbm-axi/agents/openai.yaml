@@ -1,0 +1,4 @@
+interface:
+  display_name: "cbm-axi"
+  short_description: "Explore indexed codebases with compact TOON output"
+  default_prompt: "Use $cbm-axi to inspect the current codebase through codebase-memory-mcp."
