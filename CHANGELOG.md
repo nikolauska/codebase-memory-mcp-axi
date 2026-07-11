@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.0] - 2026-07-11
+
+### Added
+
+- Added Claude Code and Codex plugin marketplace manifests.
+- Added plugin-local executable installation with SHA-256 verification.
+- Added bundled session hooks using persistent plugin data instead of global PATH installs.
+
+### Changed
+
+- The plugin launcher can find `codebase-memory-mcp` beside the local `cbm-axi` binary.
+- Legacy `cbm-axi setup` hooks remain available for non-plugin installations.
+
 ## [0.1.1] - 2026-07-10
 
 ### Added
