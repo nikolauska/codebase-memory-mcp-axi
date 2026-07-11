@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -144,7 +145,19 @@ func toolCommand(tool string, args []string, stdin io.Reader, stdout, stderr io.
 func executeBackend(args []string) ([]byte, []byte, error) {
 	path, err := exec.LookPath(backendName)
 	if err != nil {
-		return nil, nil, errors.New(backendName + " is not installed or not on PATH")
+		executable, executableErr := os.Executable()
+		if executableErr != nil {
+			return nil, nil, errors.New(backendName + " is not installed or not on PATH")
+		}
+		backend := backendName
+		if runtime.GOOS == "windows" {
+			backend += ".exe"
+		}
+		candidate := filepath.Join(filepath.Dir(executable), backend)
+		if _, statErr := os.Stat(candidate); statErr != nil {
+			return nil, nil, errors.New(backendName + " is not installed or not on PATH")
+		}
+		path = candidate
 	}
 	cmd := exec.Command(path, args...)
 	cmd.Env = append(os.Environ(), "CBM_LOG_LEVEL=none")

@@ -1,0 +1,31 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/cbm-axi\" hook-start",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/bin/cbm-axi.ps1\" hook-start",
+            "timeout": 30,
+            "statusMessage": "Loading cbm-axi context..."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/cbm-axi\" hook-end",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/bin/cbm-axi.ps1\" hook-end",
+            "timeout": 30,
+            "statusMessage": "Saving cbm-axi session state..."
+          }
+        ]
+      }
+    ]
+  }
+}

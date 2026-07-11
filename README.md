@@ -13,6 +13,38 @@ make install
 cbm-axi setup
 ```
 
+### Claude Code and Codex plugins
+
+Add and install the marketplace plugin:
+
+```text
+# Claude Code
+/plugin marketplace add nikolauska/codebase-memory-mcp-axi
+/plugin install cbm-axi@codebase-memory-mcp-axi
+
+# Codex
+codex plugin marketplace add nikolauska/codebase-memory-mcp-axi
+codex plugin add cbm-axi@codebase-memory-mcp-axi
+```
+
+The plugin installs the skill and lazily downloads both executables into its writable local plugin
+data directory on first use. Nothing is added to your global `PATH`. For a standalone checkout,
+run the installer directly:
+
+```sh
+./scripts/install.sh
+# Windows PowerShell: .\scripts\install.ps1
+```
+
+The installer downloads verified releases of `cbm-axi` and `codebase-memory-mcp`. When run by the
+plugin it uses `PLUGIN_DATA`/`CLAUDE_PLUGIN_DATA`; standalone use defaults to `~/.local/bin` (or
+the platform equivalent). Plugin hooks are bundled and removed with the plugin. `cbm-axi setup`
+remains available for legacy user-level hook setup outside the plugin.
+
+To remove everything installed by the plugin, uninstall the plugin from Claude Code or Codex. The
+plugin-managed binaries and hooks are then removed with its plugin data and bundle; any legacy
+hooks created by `cbm-axi setup` must be removed separately.
+
 `setup` installs idempotent user-level session integrations for Claude Code, Codex, and OpenCode. The repository also includes the installable [`cbm-axi` skill](skills/cbm-axi/SKILL.md). Use either the hooks or the skill; both are not required.
 
 ## Use

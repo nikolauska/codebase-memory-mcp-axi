@@ -32,6 +32,7 @@ jobs:
         with:
           go-version-file: go.mod
       - run: make dist VERSION="${GITHUB_REF_NAME}"
+      - run: sha256sum dist/cbm-axi-* > dist/checksums.txt
       - run: gh release create "${GITHUB_REF_NAME}" dist/* --verify-tag --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}

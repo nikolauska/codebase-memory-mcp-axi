@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+data_dir="${PLUGIN_DATA:-${CLAUDE_PLUGIN_DATA:-${CBM_AXI_DATA_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/cbm-axi}}}"
+install_dir="$data_dir/bin"
+binary="$install_dir/cbm-axi"
+
+if [ ! -x "$binary" ]; then
+  CBM_AXI_INSTALL_DIR="$install_dir" CBM_AXI_DATA_DIR="$data_dir" "$root/scripts/install.sh"
+fi
+
+exec "$binary" "$@"
