@@ -36,7 +36,7 @@ func TestToolCommandRendersStructuredContent(t *testing.T) {
 	previous := runBackend
 	t.Cleanup(func() { runBackend = previous })
 	runBackend = func(args []string) ([]byte, []byte, error) {
-		if strings.Join(args, " ") != "cli --json search_graph --project demo --limit 20" {
+		if strings.Join(args, " ") != `cli --json search_graph {"limit":20,"project":"demo"}` {
 			t.Fatalf("unexpected backend args: %v", args)
 		}
 		return []byte(`{"structuredContent":{"total":1,"has_more":false,"results":[{"name":"Search","qualified_name":"demo.Search","label":"Function","file_path":"main.go"}],"isError":false}}`), nil, nil
@@ -47,6 +47,21 @@ func TestToolCommandRendersStructuredContent(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "results[1]{file_path,label,name,qualified_name}") {
 		t.Fatalf("unexpected output: %s", stdout.String())
+	}
+}
+
+func TestToolCommandSerializesWindowsRepoPath(t *testing.T) {
+	previous := runBackend
+	t.Cleanup(func() { runBackend = previous })
+	runBackend = func(args []string) ([]byte, []byte, error) {
+		if strings.Join(args, " ") != `cli --json index_repository {"repo_path":"C:\\Users\\niko\\repo"}` {
+			t.Fatalf("unexpected backend args: %v", args)
+		}
+		return []byte(`{"structuredContent":{"status":"ok"},"isError":false}`), nil, nil
+	}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"index_repository", "--repo-path", `C:\Users\niko\repo`}, strings.NewReader(""), &stdout, &stderr); code != 0 {
+		t.Fatalf("exit code %d: %s", code, stdout.String())
 	}
 }
 

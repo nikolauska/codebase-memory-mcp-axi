@@ -96,9 +96,13 @@ func toolCommand(tool string, args []string, stdin io.Reader, stdout, stderr io.
 		return toolHelp(tool, stdout, stderr)
 	}
 	toolArgs = defaultToolArgs(tool, toolArgs)
+	backendToolArgs, err := serializeToolArgs(toolArgs)
+	if err != nil {
+		return usageError(stdout, err.Error(), "cbm-axi "+tool+" --help")
+	}
 
-	args = append([]string{"cli", "--json", tool}, toolArgs...)
-	backendStdout, backendStderr, backendErr := runBackend(args)
+	backendArgs := append([]string{"cli", "--json", tool}, backendToolArgs...)
+	backendStdout, backendStderr, backendErr := runBackend(backendArgs)
 	if backendErr != nil && len(bytes.TrimSpace(backendStdout)) == 0 {
 		message := firstUsefulLine(string(backendStderr))
 		if message == "" {
@@ -132,7 +136,7 @@ func toolCommand(tool string, args []string, stdin io.Reader, stdout, stderr io.
 		fmt.Fprintln(stdout)
 	}
 	if truncated {
-		fmt.Fprintf(stdout, "help[1]: Run `%s` for complete text\n", commandWith(args[3:], tool, "--full"))
+		fmt.Fprintf(stdout, "help[1]: Run `%s` for complete text\n", commandWith(toolArgs, tool, "--full"))
 	}
 	if more {
 		fmt.Fprintf(stdout, "help[1]: Run `%s` for remaining %s\n", nextPageCommand(tool, toolArgs), collectionKey)
@@ -356,6 +360,51 @@ func defaultToolArgs(tool string, args []string) []string {
 	return append(append([]string{}, args...), "--limit", "20")
 }
 
+func serializeToolArgs(args []string) ([]string, error) {
+	if len(args) == 0 || (len(args) == 1 && json.Valid([]byte(args[0]))) || has(args, "--args-file") {
+		return args, nil
+	}
+	values := make(map[string]any)
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if !strings.HasPrefix(arg, "--") {
+			return nil, fmt.Errorf("unexpected argument: %s", arg)
+		}
+		name, value, found := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
+		if !found {
+			if i+1 >= len(args) || strings.HasPrefix(args[i+1], "--") {
+				values[strings.ReplaceAll(name, "-", "_")] = true
+				continue
+			}
+			i++
+			value = args[i]
+		}
+		key := strings.ReplaceAll(name, "-", "_")
+		values[key] = toolArgValue(key, value)
+	}
+	raw, err := json.Marshal(values)
+	if err != nil {
+		return nil, err
+	}
+	return []string{string(raw)}, nil
+}
+
+func toolArgValue(key, value string) any {
+	switch key {
+	case "limit", "offset", "depth", "max_depth", "min_degree", "max_degree":
+		if number, err := strconv.Atoi(value); err == nil {
+			return number
+		}
+	}
+	if (strings.HasPrefix(value, "[") || strings.HasPrefix(value, "{")) && json.Valid([]byte(value)) {
+		return json.RawMessage(value)
+	}
+	if value == "true" || value == "false" {
+		return value == "true"
+	}
+	return value
+}
+
 func projectRows(rows []any, fields []string, truncated *bool) []any {
 	projected := make([]any, 0, len(rows))
 	for _, raw := range rows {
@@ -494,6 +543,10 @@ func dashboard(stdout, stderr io.Writer) int {
 
 func callTool(tool string, args []string) (any, string, string, bool) {
 	args = defaultToolArgs(tool, args)
+	args, err := serializeToolArgs(args)
+	if err != nil {
+		return nil, err.Error(), "", true
+	}
 	backendStdout, backendStderr, backendErr := runBackend(append([]string{"cli", "--json", tool}, args...))
 	if backendErr != nil && len(bytes.TrimSpace(backendStdout)) == 0 {
 		message := firstUsefulLine(string(backendStderr))

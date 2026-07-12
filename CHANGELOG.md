@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.1] - 2026-07-13
+
+### Fixed
+
+- Fixed MCP tool flags being forwarded directly instead of serialized as the backend's JSON argument object, including Windows repository paths.
+
 ## [0.2.0] - 2026-07-11
 
 ### Added
