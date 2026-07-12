@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.2] - 2026-07-13
+
+### Fixed
+
+- Pinned plugin-managed `cbm-axi` and `codebase-memory-mcp` downloads to compatible releases and refresh them when their declared versions change.
+
 ## [0.2.1] - 2026-07-13
 
 ### Fixed

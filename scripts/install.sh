@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+root="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 data_dir="${PLUGIN_DATA:-${CLAUDE_PLUGIN_DATA:-${CBM_AXI_DATA_DIR:-}}}"
 install_dir="${CBM_AXI_INSTALL_DIR:-}"
 if [ -z "$install_dir" ] && [ -n "$data_dir" ]; then
   install_dir="$data_dir/bin"
 fi
 install_dir="${install_dir:-${GOBIN:-$HOME/.local/bin}}"
-version="${CBM_AXI_VERSION:-latest}"
+version="$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$root/.codex-plugin/plugin.json")"
+backend_version="$(tr -d '[:space:]' < "$root/codebase-memory-mcp.version")"
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
@@ -15,6 +17,9 @@ die() {
   echo "error: $*" >&2
   exit 1
 }
+
+printf '%s\n' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || die "invalid plugin version: $version"
+printf '%s\n' "$backend_version" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' || die "invalid codebase-memory-mcp version: $backend_version"
 
 download() {
   if command -v curl >/dev/null 2>&1; then
@@ -56,17 +61,12 @@ esac
 
 mkdir -p "$install_dir"
 
-if ! command -v codebase-memory-mcp >/dev/null 2>&1; then
-  upstream="$tmp_dir/codebase-memory-mcp-install.sh"
-  download "https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/main/install.sh" "$upstream"
+upstream="$tmp_dir/codebase-memory-mcp-install.sh"
+download "https://raw.githubusercontent.com/DeusData/codebase-memory-mcp/$backend_version/install.sh" "$upstream"
+CBM_DOWNLOAD_URL="https://github.com/DeusData/codebase-memory-mcp/releases/download/$backend_version" \
   bash "$upstream" --dir "$install_dir" --skip-config
-fi
 
-if [ "$version" = "latest" ]; then
-  base_url="https://github.com/nikolauska/codebase-memory-mcp-axi/releases/latest/download"
-else
-  base_url="https://github.com/nikolauska/codebase-memory-mcp-axi/releases/download/$version"
-fi
+base_url="https://github.com/nikolauska/codebase-memory-mcp-axi/releases/download/v$version"
 
 asset="cbm-axi-$os-$arch"
 binary="$tmp_dir/$asset"
@@ -75,6 +75,7 @@ checksums="$tmp_dir/checksums.txt"
 download "$base_url/checksums.txt" "$checksums"
 checksum "$checksums" "$asset" "$binary"
 install -m 0755 "$binary" "$install_dir/cbm-axi"
+printf '%s\n' "$backend_version" > "$install_dir/codebase-memory-mcp.version"
 
 echo "Installed cbm-axi and codebase-memory-mcp to $install_dir"
 case ":$PATH:" in

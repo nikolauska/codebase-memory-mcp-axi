@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+root="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 data_dir="${PLUGIN_DATA:-${CLAUDE_PLUGIN_DATA:-${CBM_AXI_DATA_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/cbm-axi}}}"
 install_dir="$data_dir/bin"
 binary="$install_dir/cbm-axi"
+backend="$install_dir/codebase-memory-mcp"
+version="$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' "$root/.codex-plugin/plugin.json")"
+backend_version="$(tr -d '[:space:]' < "$root/codebase-memory-mcp.version")"
+installed_version="$([ ! -x "$binary" ] || "$binary" --version 2>/dev/null || true)"
+installed_backend_version="$(tr -d '[:space:]' < "$install_dir/codebase-memory-mcp.version" 2>/dev/null || true)"
 
-if [ ! -x "$binary" ]; then
+if [ "$installed_version" != "version: v$version" ] || [ ! -x "$backend" ] || [ "$installed_backend_version" != "$backend_version" ]; then
   CBM_AXI_INSTALL_DIR="$install_dir" CBM_AXI_DATA_DIR="$data_dir" "$root/scripts/install.sh"
 fi
 
+export PATH="$install_dir:$PATH"
 exec "$binary" "$@"

@@ -40,10 +40,12 @@ run the installer directly:
 # Windows PowerShell: .\scripts\install.ps1
 ```
 
-The installer downloads verified releases of `cbm-axi` and `codebase-memory-mcp`. When run by the
-plugin it uses `PLUGIN_DATA`/`CLAUDE_PLUGIN_DATA`; standalone use defaults to `~/.local/bin` (or
-the platform equivalent). Plugin hooks are bundled and removed with the plugin. `cbm-axi setup`
-remains available for legacy user-level hook setup outside the plugin.
+The installer downloads the verified `cbm-axi` release declared by the plugin manifest and its
+pinned, compatible `codebase-memory-mcp` release. When run by the plugin it uses
+`PLUGIN_DATA`/`CLAUDE_PLUGIN_DATA`; standalone use defaults to `~/.local/bin` (or the platform
+equivalent). Updated plugin or backend versions are installed on the next launch. Plugin hooks are
+bundled and removed with the plugin. `cbm-axi setup` remains available for legacy user-level hook
+setup outside the plugin.
 
 To remove everything installed by the plugin, uninstall the plugin from Claude Code, Codex, or
 GitHub Copilot CLI. The plugin-managed binaries and hooks are then removed with its plugin data and
