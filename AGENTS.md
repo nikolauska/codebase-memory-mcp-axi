@@ -7,6 +7,7 @@
 - MUST: Run `make lint` before committing.
 - MUST: Run `make test` before opening a pull request.
 - MUST: Run `make check-skill` when changing `skills/cbm-axi/`.
+- MUST: Update both `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` whenever changing the release version.
 - NEVER: Add third-party dependencies without updating `go.mod` and `go.sum` deliberately; this project currently uses only the standard library.
 - NEVER: Commit `cbm-axi` or `dist/`; they are generated release outputs.
 - NEVER: Read, log, or commit secrets, credentials, or user configuration contents.
