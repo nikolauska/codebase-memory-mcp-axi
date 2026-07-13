@@ -54,7 +54,7 @@ func TestToolCommandSerializesWindowsRepoPath(t *testing.T) {
 	previous := runBackend
 	t.Cleanup(func() { runBackend = previous })
 	runBackend = func(args []string) ([]byte, []byte, error) {
-		if strings.Join(args, " ") != `cli --json index_repository {"repo_path":"C:\\Users\\niko\\repo"}` {
+		if strings.Join(args, " ") != `cli --json index_repository {"repo_path":"C:/Users/niko/repo"}` {
 			t.Fatalf("unexpected backend args: %v", args)
 		}
 		return []byte(`{"structuredContent":{"status":"ok"},"isError":false}`), nil, nil
@@ -62,6 +62,23 @@ func TestToolCommandSerializesWindowsRepoPath(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	if code := run([]string{"index_repository", "--repo-path", `C:\Users\niko\repo`}, strings.NewReader(""), &stdout, &stderr); code != 0 {
 		t.Fatalf("exit code %d: %s", code, stdout.String())
+	}
+}
+
+func TestToolCommandRejectsSuccessFromFailedBackend(t *testing.T) {
+	previous := runBackend
+	t.Cleanup(func() { runBackend = previous })
+	runBackend = func([]string) ([]byte, []byte, error) {
+		return []byte(`{"structuredContent":{"project":"demo","status":"indexed"},"isError":false}`), []byte("artifact.import err=write_temp_db detail=open_temp errno=13\npath=C:/Users/niko/.cache/codebase-memory-mcp/demo.db.import_tmp\npipeline.err phase=dump\n"), errors.New("exit status 1")
+	}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"index_repository", "--repo-path", `C:\Users\niko\repo`}, strings.NewReader(""), &stdout, &stderr); code != 1 {
+		t.Fatalf("exit code %d, want 1: %s", code, stdout.String())
+	}
+	for _, want := range []string{"errno=13", "demo.db.import_tmp", "phase=dump"} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Fatalf("output missing %q: %s", want, stdout.String())
+		}
 	}
 }
 

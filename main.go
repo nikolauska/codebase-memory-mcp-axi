@@ -104,12 +104,11 @@ func toolCommand(tool string, args []string, stdin io.Reader, stdout, stderr io.
 
 	backendArgs := append([]string{"cli", "--json", tool}, backendToolArgs...)
 	backendStdout, backendStderr, backendErr := runBackend(backendArgs)
+	if backendErr != nil && len(bytes.TrimSpace(backendStderr)) != 0 {
+		return commandError(stdout, strings.TrimSpace(string(backendStderr)), "", tool)
+	}
 	if backendErr != nil && len(bytes.TrimSpace(backendStdout)) == 0 {
-		message := firstUsefulLine(string(backendStderr))
-		if message == "" {
-			message = backendErr.Error()
-		}
-		return commandError(stdout, message, "", tool)
+		return commandError(stdout, backendErr.Error(), "", tool)
 	}
 	value, message, hint, isError := decodeBackendResult(backendStdout)
 	if isError {
@@ -120,12 +119,8 @@ func toolCommand(tool string, args []string, stdin io.Reader, stdout, stderr io.
 		}
 		return commandError(stdout, message, hint, tool)
 	}
-	if backendErr != nil && value == nil {
-		message := firstUsefulLine(string(backendStderr))
-		if message == "" {
-			message = backendErr.Error()
-		}
-		return commandError(stdout, message, "", tool)
+	if backendErr != nil {
+		return commandError(stdout, backendErr.Error(), "", tool)
 	}
 	if value == nil {
 		return commandError(stdout, "backend returned no result", "", tool)
@@ -391,6 +386,9 @@ func serializeToolArgs(args []string) ([]string, error) {
 }
 
 func toolArgValue(key, value string) any {
+	if key == "repo_path" && ((len(value) >= 3 && value[1] == ':' && (value[2] == '\\' || value[2] == '/')) || strings.HasPrefix(value, `\\`)) {
+		value = strings.ReplaceAll(value, `\`, "/")
+	}
 	switch key {
 	case "limit", "offset", "depth", "max_depth", "min_degree", "max_degree":
 		if number, err := strconv.Atoi(value); err == nil {
@@ -549,23 +547,18 @@ func callTool(tool string, args []string) (any, string, string, bool) {
 		return nil, err.Error(), "", true
 	}
 	backendStdout, backendStderr, backendErr := runBackend(append([]string{"cli", "--json", tool}, args...))
+	if backendErr != nil && len(bytes.TrimSpace(backendStderr)) != 0 {
+		return nil, strings.TrimSpace(string(backendStderr)), "", true
+	}
 	if backendErr != nil && len(bytes.TrimSpace(backendStdout)) == 0 {
-		message := firstUsefulLine(string(backendStderr))
-		if message == "" {
-			message = backendErr.Error()
-		}
-		return nil, message, "", true
+		return nil, backendErr.Error(), "", true
 	}
 	value, message, hint, failed := decodeBackendResult(backendStdout)
 	if failed {
 		return nil, message, hint, true
 	}
-	if backendErr != nil && value == nil {
-		message := firstUsefulLine(string(backendStderr))
-		if message == "" {
-			message = backendErr.Error()
-		}
-		return nil, message, "", true
+	if backendErr != nil {
+		return nil, backendErr.Error(), "", true
 	}
 	return value, "", "", false
 }
@@ -691,7 +684,7 @@ func commandError(stdout io.Writer, message, hint, tool string) int {
 	if hint == "" {
 		hint = "Run `cbm-axi " + tool + " --help` for valid arguments"
 	}
-	fmt.Fprintf(stdout, "error: %s\nhelp: %s\n", quote(firstUsefulLine(message)), quote(hint))
+	fmt.Fprintf(stdout, "error: %s\nhelp: %s\n", quote(message), quote(hint))
 	return 1
 }
 
