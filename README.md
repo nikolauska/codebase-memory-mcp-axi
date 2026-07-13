@@ -48,6 +48,61 @@ Updated plugin or backend versions are installed on the next launch. Plugin hook
 bundled and removed with the plugin. `cbm-axi setup` remains available for legacy user-level hook
 setup outside the plugin.
 
+#### Allow graph-cache writes
+
+The graph database is stored under `<plugin-data>/cache`. Replace `<plugin-data>` below with the
+absolute plugin data directory for your installation: the directory containing the plugin-managed
+`bin/` and `cache/` directories. These permissions must be configured by the user; a plugin cannot
+grant itself access outside the current workspace.
+
+For Claude Code, add the directory to `~/.claude/settings.json`. When Bash sandboxing is enabled,
+also allow writes at the sandbox boundary:
+
+```json
+{
+  "permissions": {
+    "additionalDirectories": ["<plugin-data>"]
+  },
+  "sandbox": {
+    "filesystem": {
+      "allowWrite": ["<plugin-data>"]
+    }
+  }
+}
+```
+
+For one session, `claude --add-dir "<plugin-data>"` adds the directory, but the sandbox write rule
+still applies when sandboxing is enabled. See the [Claude Code settings reference](https://code.claude.com/docs/en/settings).
+
+For Codex, add the absolute directory to `~/.codex/config.toml`, then start a new session:
+
+```toml
+[sandbox_workspace_write]
+writable_roots = ["<plugin-data>"]
+```
+
+See the [Codex sandbox configuration](https://learn.chatgpt.com/docs/config-file/config-advanced#approval-policies-and-sandbox-modes).
+
+For GitHub Copilot CLI, use `/add-dir <plugin-data>` in a session or start with
+`copilot --add-dir="<plugin-data>"`. To persist access for a repository, add the absolute directory
+to that repository's `allowed_directories` entry in `~/.copilot/permissions-config.json` while
+Copilot CLI is stopped:
+
+```json
+{
+  "locations": {
+    "<absolute-repository-path>": {
+      "allowed_directories": ["<plugin-data>"]
+    }
+  }
+}
+```
+
+If Copilot CLI's local sandbox is enabled, open `/sandbox`, select **Filesystem**, and add the same
+directory with read/write access. Directory access and command approval are separate. See the
+[Copilot CLI configuration reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference)
+and [local sandbox settings](https://docs.github.com/en/copilot/how-tos/cloud-and-local-sandboxes/configuring-local-sandbox-settings).
+
 To remove everything installed by the plugin, uninstall the plugin from Claude Code, Codex, or
 GitHub Copilot CLI. The plugin-managed binaries and hooks are then removed with its plugin data and
 bundle; any legacy hooks created by `cbm-axi setup` must be removed separately.
