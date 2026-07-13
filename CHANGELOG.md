@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.5] - 2026-07-13
+
+### Fixed
+
+- Store plugin-managed graph caches in the plugin's writable data directory so sandboxed indexing does not require escalation.
+
 ## [0.2.2] - 2026-07-13
 
 ### Fixed

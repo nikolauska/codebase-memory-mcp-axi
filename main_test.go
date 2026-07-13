@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -80,6 +82,44 @@ func TestToolCommandRejectsSuccessFromFailedBackend(t *testing.T) {
 			t.Fatalf("output missing %q: %s", want, stdout.String())
 		}
 	}
+}
+
+func TestPluginBackendUsesWritableManagedCache(t *testing.T) {
+	installDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(installDir, pluginMarker), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("CBM_CACHE_DIR", "")
+	env, cacheDir := backendEnvironment(filepath.Join(installDir, backendName))
+	want := filepath.Join(filepath.Dir(installDir), "cache")
+	if cacheDir != want || !hasEnv(env, "CBM_CACHE_DIR", want) {
+		t.Fatalf("cacheDir = %q, env = %v, want %q", cacheDir, env, want)
+	}
+	explicit := filepath.Join(t.TempDir(), "explicit-cache")
+	t.Setenv("CBM_CACHE_DIR", explicit)
+	_, cacheDir = backendEnvironment(filepath.Join(installDir, backendName))
+	if cacheDir != explicit {
+		t.Fatalf("explicit cacheDir = %q, want %q", cacheDir, explicit)
+	}
+	if err := preflightCache(filepath.Join(t.TempDir(), "parent", "cache")); err != nil {
+		t.Fatalf("writable cache rejected: %v", err)
+	}
+	blocked := filepath.Join(t.TempDir(), "file")
+	if err := os.WriteFile(blocked, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := preflightCache(filepath.Join(blocked, "cache")); err == nil || !strings.Contains(err.Error(), "is not writable") {
+		t.Fatalf("unwritable cache error = %v", err)
+	}
+}
+
+func hasEnv(env []string, key, value string) bool {
+	for _, entry := range env {
+		if entry == key+"="+value {
+			return true
+		}
+	}
+	return false
 }
 
 func TestToolCommandMapsBackendErrors(t *testing.T) {

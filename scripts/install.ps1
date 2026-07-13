@@ -38,6 +38,7 @@ try {
 
   Copy-Item $Binary (Join-Path $InstallDir "cbm-axi.exe") -Force
   Set-Content (Join-Path $InstallDir "codebase-memory-mcp.version") $BackendVersion
+  if ($DataDir) { New-Item -ItemType File -Path (Join-Path $InstallDir ".cbm-axi-plugin") -Force | Out-Null }
   $UserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
   if ($UserPath -notlike "*$InstallDir*") {
     [Environment]::SetEnvironmentVariable("PATH", "$UserPath;$InstallDir", "User")

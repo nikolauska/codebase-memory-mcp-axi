@@ -17,7 +17,10 @@ import (
 
 var version = "dev"
 
-const backendName = "codebase-memory-mcp"
+const (
+	backendName  = "codebase-memory-mcp"
+	pluginMarker = ".cbm-axi-plugin"
+)
 
 var mcpTools = map[string]bool{
 	"index_repository": true,
@@ -160,13 +163,50 @@ func executeBackend(args []string) ([]byte, []byte, error) {
 		path = candidate
 	}
 	cmd := exec.Command(path, args...)
-	cmd.Env = append(os.Environ(), "CBM_LOG_LEVEL=none")
+	env, cacheDir := backendEnvironment(path)
+	cmd.Env = env
+	if cacheDir != "" && has(args, "index_repository") {
+		if err := preflightCache(cacheDir); err != nil {
+			return nil, nil, err
+		}
+	}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	cmd.Stdin = os.Stdin
 	err = cmd.Run()
 	return stdout.Bytes(), stderr.Bytes(), err
+}
+
+func backendEnvironment(path string) (env []string, cacheDir string) {
+	env = append(os.Environ(), "CBM_LOG_LEVEL=none")
+	cacheDir = os.Getenv("CBM_CACHE_DIR")
+	if cacheDir == "" {
+		if _, err := os.Stat(filepath.Join(filepath.Dir(path), pluginMarker)); err == nil {
+			cacheDir = filepath.Clean(filepath.Join(filepath.Dir(path), "..", "cache"))
+			env = append(env, "CBM_CACHE_DIR="+cacheDir)
+		}
+	}
+	return env, cacheDir
+}
+
+func preflightCache(cacheDir string) error {
+	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
+		return fmt.Errorf("cache directory %s is not writable: %w", cacheDir, err)
+	}
+	probe, err := os.CreateTemp(cacheDir, ".cbm-axi-write-test-")
+	if err != nil {
+		return fmt.Errorf("cache directory %s is not writable: %w", cacheDir, err)
+	}
+	name := probe.Name()
+	defer os.Remove(name)
+	if err := probe.Close(); err != nil {
+		return fmt.Errorf("cache directory %s is not writable: %w", cacheDir, err)
+	}
+	if err := os.Remove(name); err != nil {
+		return fmt.Errorf("cache directory %s is not writable: %w", cacheDir, err)
+	}
+	return nil
 }
 
 func decodeBackendResult(raw []byte) (value any, message, hint string, isError bool) {

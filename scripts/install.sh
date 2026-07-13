@@ -76,6 +76,9 @@ download "$base_url/checksums.txt" "$checksums"
 checksum "$checksums" "$asset" "$binary"
 install -m 0755 "$binary" "$install_dir/cbm-axi"
 printf '%s\n' "$backend_version" > "$install_dir/codebase-memory-mcp.version"
+if [ -n "$data_dir" ]; then
+  touch "$install_dir/.cbm-axi-plugin"
+fi
 
 echo "Installed cbm-axi and codebase-memory-mcp to $install_dir"
 case ":$PATH:" in
