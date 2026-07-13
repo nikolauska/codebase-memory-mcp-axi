@@ -90,6 +90,23 @@ func TestUsageErrorsUseExitCodeTwo(t *testing.T) {
 	}
 }
 
+func TestHookStartInstructsAgentToUseSkill(t *testing.T) {
+	previous := runBackend
+	t.Cleanup(func() { runBackend = previous })
+	runBackend = func([]string) ([]byte, []byte, error) {
+		return []byte(`{"structuredContent":{"projects":[]},"isError":false}`), nil, nil
+	}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"hook-start"}, strings.NewReader(""), &stdout, &stderr); code != 0 {
+		t.Fatalf("exit code %d: %s", code, stdout.String())
+	}
+	for _, want := range []string{"Use the `cbm-axi` skill", "Search the graph before reading source files", "Fetch exact snippets and trace relationships"} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Fatalf("hook output missing %q: %s", want, stdout.String())
+		}
+	}
+}
+
 func TestSetupIsIdempotent(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	var first, second bytes.Buffer

@@ -67,6 +67,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	case "setup":
 		return setupCommand(args[1:], stdout)
 	case "hook-start":
+		fmt.Fprintln(stdout, "instructions[3]:\n  Use the `cbm-axi` skill when exploring this codebase.\n  Search the graph before reading source files broadly.\n  Fetch exact snippets and trace relationships only after locating relevant symbols.")
 		_ = dashboard(stdout, stderr)
 		return 0
 	case "hook-end":
