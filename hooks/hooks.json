@@ -6,8 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/cbm-axi\" hook-start",
-            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/bin/cbm-axi.ps1\" hook-start",
+            "command": "cbm-axi hook-start",
+            "commandWindows": "cbm-axi hook-start",
             "timeout": 30,
             "statusMessage": "Loading cbm-axi context..."
           }
@@ -19,8 +19,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/cbm-axi\" hook-end",
-            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/bin/cbm-axi.ps1\" hook-end",
+            "command": "cbm-axi hook-end",
+            "commandWindows": "cbm-axi hook-end",
             "timeout": 30,
             "statusMessage": "Saving cbm-axi session state..."
           }

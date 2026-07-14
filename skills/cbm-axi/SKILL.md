@@ -7,7 +7,7 @@ description: Use cbm-axi when exploring indexed codebases through codebase-memor
 
 Prefer cbm-axi over raw codebase-memory-mcp cli calls when an agent needs compact, structured TOON output.
 
-When installed as a plugin, use its bundled cbm-axi launcher. It downloads both binaries into the plugin's writable data directory and never changes the global PATH. If the launcher is not on PATH, use ${CLAUDE_PLUGIN_ROOT}/bin/cbm-axi in Claude or ${PLUGIN_ROOT}/bin/cbm-axi in Codex. Run cbm-axi setup only for legacy user-level hooks outside the plugin. The CLI never prompts.
+Install cbm-axi and codebase-memory-mcp separately and ensure both executables are available on PATH. Run cbm-axi setup only when user-level session hooks are wanted. The CLI never prompts.
 
 ## Workflow
 
