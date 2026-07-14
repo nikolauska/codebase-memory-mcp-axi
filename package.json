@@ -1,0 +1,29 @@
+{
+  "name": "@nikolauska/cbm-axi",
+  "version": "0.2.6",
+  "description": "Agent-oriented CLI for compact codebase-memory graph queries",
+  "license": "MIT",
+  "author": "Niko Lehtovirta",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikolauska/codebase-memory-mcp-axi.git"
+  },
+  "homepage": "https://github.com/nikolauska/codebase-memory-mcp-axi",
+  "bugs": "https://github.com/nikolauska/codebase-memory-mcp-axi/issues",
+  "bin": {
+    "cbm-axi": "npm/cbm-axi.js"
+  },
+  "files": [
+    "npm/cbm-axi.js",
+    "dist/"
+  ],
+  "scripts": {
+    "test": "node --test npm/cbm-axi.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

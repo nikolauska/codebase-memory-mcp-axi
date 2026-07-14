@@ -18,6 +18,7 @@ jobs:
       - run: make lint
       - run: make test
       - run: make check-skill
+      - run: make check-npm
       - run: make build
 
   release:
@@ -26,13 +27,20 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
       - run: make dist VERSION="${GITHUB_REF_NAME}"
       - run: sha256sum dist/cbm-axi-* > dist/checksums.txt
       - run: gh release create "${GITHUB_REF_NAME}" dist/* --verify-tag --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
+      - run: make npm-publish VERSION="${GITHUB_REF_NAME}"

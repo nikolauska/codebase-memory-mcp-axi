@@ -15,6 +15,12 @@ See the [codebase-memory-mcp installation instructions](https://github.com/DeusD
 Then install `cbm-axi` separately:
 
 ```sh
+npm install --global @nikolauska/cbm-axi
+```
+
+Or build it from source:
+
+```sh
 git clone https://github.com/nikolauska/codebase-memory-mcp-axi.git
 cd codebase-memory-mcp-axi
 make install

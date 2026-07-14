@@ -1,4 +1,4 @@
-.PHONY: build test fmt lint check-skill dist install clean
+.PHONY: build test fmt lint check-skill check-npm dist npm-publish install clean
 
 BIN := cbm-axi
 VERSION ?= dev
@@ -11,6 +11,7 @@ build:
 
 test:
 	$(GO) test ./...
+	npm test
 
 fmt:
 	gofmt -w .
@@ -18,9 +19,13 @@ fmt:
 lint:
 	test -z "$$(gofmt -l .)"
 	$(GO) vet ./...
+	node --check npm/cbm-axi.js
 
 check-skill:
 	$(GO) run . --print-skill | cmp -s - skills/cbm-axi/SKILL.md
+
+check-npm: dist
+	npm pack --dry-run
 
 dist:
 	@mkdir -p dist
@@ -30,6 +35,10 @@ dist:
 	GOOS=linux GOARCH=amd64 $(GO) build -ldflags "$(LDFLAGS)" -o dist/$(BIN)-linux-amd64 .
 	GOOS=windows GOARCH=arm64 $(GO) build -ldflags "$(LDFLAGS)" -o dist/$(BIN)-windows-arm64.exe .
 	GOOS=windows GOARCH=amd64 $(GO) build -ldflags "$(LDFLAGS)" -o dist/$(BIN)-windows-amd64.exe .
+
+npm-publish:
+	test "$$(node -p "require('./package.json').version")" = "$(patsubst v%,%,$(VERSION))"
+	npm publish --access public
 
 install:
 	@mkdir -p "$(INSTALL_DIR)"

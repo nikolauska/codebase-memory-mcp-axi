@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.6] - 2026-07-14
+
+### Added
+
+- Publish `@nikolauska/cbm-axi` with bundled platform binaries.
+
 ## [0.2.5] - 2026-07-13
 
 ### Fixed
