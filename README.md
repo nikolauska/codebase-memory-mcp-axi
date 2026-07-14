@@ -72,6 +72,14 @@ Errors are structured on stdout. Diagnostics stay on stderr. Exit codes are `0` 
 
 ## Develop
 
+Install the Go and Node.js versions pinned by [mise](https://mise.jdx.dev/):
+
+```sh
+mise install
+```
+
+Then run the development checks through the Makefile:
+
 ```sh
 make fmt
 make test
