@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.7] - 2026-07-14
+
+### Fixed
+
+- Tell agents to request elevated filesystem access when indexing cannot write to the user cache.
+
 ## [0.2.6] - 2026-07-14
 
 ### Added

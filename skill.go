@@ -14,7 +14,7 @@ Install cbm-axi and codebase-memory-mcp separately and ensure both executables a
 ## Workflow
 
 1. Run cbm-axi to see read-only status for the current directory.
-2. If it is not indexed, run cbm-axi index_repository --repo-path <path>.
+2. If it is not indexed, run cbm-axi index_repository --repo-path <path>. If indexing fails because the user cache is not writable, ask for permission to retry with elevated filesystem access.
 3. Use list_projects, index_status, and get_graph_schema to orient.
 4. Use search_graph or search_code before reading source.
 5. Use get_code_snippet after discovering an exact qualified name.
