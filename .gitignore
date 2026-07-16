@@ -1,3 +1,8 @@
-/cbm-axi
 /dist/
-/vendor/
+/node_modules/
+.env
+.env.*
+!.env.example
+.npmrc
+*.key
+*.pem

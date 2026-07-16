@@ -12,14 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-node@v6
         with:
-          go-version-file: go.mod
-      - run: make lint
-      - run: make test
-      - run: make check-skill
-      - run: make check-npm
-      - run: make build
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm pack --dry-run
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -30,17 +30,14 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
           registry-url: https://registry.npmjs.org
-          package-manager-cache: false
-      - run: make dist VERSION="${GITHUB_REF_NAME}"
-      - run: sha256sum dist/cbm-axi-* > dist/checksums.txt
-      - run: gh release create "${GITHUB_REF_NAME}" dist/* --verify-tag --generate-notes
+          cache: npm
+      - run: npm ci
+      - run: test "v$(node -p \"require('./package.json').version\")" = "${GITHUB_REF_NAME}"
+      - run: npm publish --provenance --access public
+      - run: gh release create "${GITHUB_REF_NAME}" --verify-tag --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
-      - run: make npm-publish VERSION="${GITHUB_REF_NAME}"

@@ -1,9 +1,10 @@
 {
   "name": "@nikolauska/cbm-axi",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "description": "Agent-oriented CLI for compact codebase-memory graph queries",
   "license": "MIT",
   "author": "Niko Lehtovirta",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nikolauska/codebase-memory-mcp-axi.git"
@@ -11,19 +12,30 @@
   "homepage": "https://github.com/nikolauska/codebase-memory-mcp-axi",
   "bugs": "https://github.com/nikolauska/codebase-memory-mcp-axi/issues",
   "bin": {
-    "cbm-axi": "npm/cbm-axi.js"
+    "cbm-axi": "dist/bin/cbm-axi.js"
   },
   "files": [
-    "npm/cbm-axi.js",
-    "dist/"
+    "dist/",
+    "skills/"
   ],
   "scripts": {
-    "test": "node --test npm/cbm-axi.test.js"
+    "build": "npm run clean && tsc -p tsconfig.json && node -e \"require('node:fs').chmodSync('dist/bin/cbm-axi.js', 0o755)\"",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "lint": "tsc -p tsconfig.json --noEmit && node --check test/cbm-axi.test.js",
+    "test": "npm run build && node --test test/cbm-axi.test.js",
+    "prepack": "npm run build"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "axi-sdk-js": "^0.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^7.0.2"
   }
 }

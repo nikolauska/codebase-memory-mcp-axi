@@ -6,23 +6,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cbm-axi hook-start",
-            "commandWindows": "cbm-axi hook-start",
+            "command": "cbm-axi",
+            "commandWindows": "cbm-axi",
             "timeout": 30,
             "statusMessage": "Loading cbm-axi context..."
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cbm-axi hook-end",
-            "commandWindows": "cbm-axi hook-end",
-            "timeout": 30,
-            "statusMessage": "Saving cbm-axi session state..."
           }
         ]
       }
