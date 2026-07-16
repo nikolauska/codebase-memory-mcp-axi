@@ -28,7 +28,7 @@ export async function dashboard(backend: BackendRunner): Promise<JsonObject> {
   return {
     instructions: INSTRUCTIONS,
     project,
-    ...normalizeResponse("index_status", status).value as JsonObject,
+    ...(normalizeResponse("index_status", status).value as JsonObject),
     help: [
       `Run \`cbm-axi search_graph --project ${shellQuote(project)} --query "<terms>"\` to find symbols`,
       `Run \`cbm-axi get_architecture --project ${shellQuote(project)}\` for the project overview`,
@@ -47,7 +47,8 @@ export function currentProject(value: unknown, directory: string): string {
   let best = "";
   let bestLength = -1;
   for (const item of value.projects) {
-    if (!isObject(item) || typeof item.root_path !== "string" || typeof item.name !== "string") continue;
+    if (!isObject(item) || typeof item.root_path !== "string" || typeof item.name !== "string")
+      continue;
     const root = resolve(item.root_path);
     const path = relative(root, current);
     if (path === "" || (!path.startsWith(`..${sep}`) && path !== ".." && !isAbsolute(path))) {

@@ -22,7 +22,14 @@ test.afterEach(() => {
 
 test("serializes upstream flags and Windows paths", () => {
   assert.deepEqual(
-    serializeToolArgs(["--repo-path", String.raw`C:\Users\niko\repo`, "--depth", "2", "--semantic-query", '["send"]']),
+    serializeToolArgs([
+      "--repo-path",
+      String.raw`C:\Users\niko\repo`,
+      "--depth",
+      "2",
+      "--semantic-query",
+      '["send"]',
+    ]),
     ['{"repo_path":"C:/Users/niko/repo","depth":2,"semantic_query":["send"]}'],
   );
 });
@@ -30,7 +37,12 @@ test("serializes upstream flags and Windows paths", () => {
 test("selects the closest indexed project", () => {
   assert.equal(
     currentProject(
-      { projects: [{ name: "parent", root_path: "/repo" }, { name: "child", root_path: "/repo/packages/child" }] },
+      {
+        projects: [
+          { name: "parent", root_path: "/repo" },
+          { name: "child", root_path: "/repo/packages/child" },
+        ],
+      },
       "/repo/packages/child/src",
     ),
     "child",
@@ -49,7 +61,15 @@ test("runs MCP tools through the SDK and compacts output", async () => {
           structuredContent: {
             total: 1,
             has_more: false,
-            results: [{ name: "Search", qualified_name: "demo.Search", label: "Function", file_path: "main.ts", ignored: true }],
+            results: [
+              {
+                name: "Search",
+                qualified_name: "demo.Search",
+                label: "Function",
+                file_path: "main.ts",
+                ignored: true,
+              },
+            ],
           },
         }),
       };
@@ -76,7 +96,12 @@ test("maps backend errors to operational failures", async () => {
       status: 1,
       stdout: JSON.stringify({
         isError: true,
-        content: [{ type: "text", text: JSON.stringify({ error: "project not found", hint: "Run list_projects first" }) }],
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ error: "project not found", hint: "Run list_projects first" }),
+          },
+        ],
       }),
     })),
   });
@@ -91,7 +116,9 @@ test("truncates snippets and emits a full-output hint", async () => {
     version: "0.3.0",
     stdout: io.stdout,
     backend: backend(() => ({
-      stdout: JSON.stringify({ structuredContent: { name: "Search", source: "x".repeat(1001), secret: "hidden" } }),
+      stdout: JSON.stringify({
+        structuredContent: { name: "Search", source: "x".repeat(1001), secret: "hidden" },
+      }),
     })),
   });
   assert.match(io.output(), /truncated, 1001 chars total/);

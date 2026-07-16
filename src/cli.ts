@@ -23,10 +23,7 @@ export async function main(): Promise<void> {
   await run(process.argv.slice(2));
 }
 
-export async function run(
-  argv: string[],
-  dependencies: RunDependencies = {},
-): Promise<void> {
+export async function run(argv: string[], dependencies: RunDependencies = {}): Promise<void> {
   const backend = dependencies.backend ?? runBackend;
   const installHooks = dependencies.installHooks ?? installSessionStartHooks;
   const commands: Record<string, AxiCliCommand<undefined>> = {

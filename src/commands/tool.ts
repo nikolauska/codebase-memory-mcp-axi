@@ -22,8 +22,12 @@ export const TOOL_NAMES = [
 ] as const;
 export const TOOLS = new Set<string>(TOOL_NAMES);
 
-export function createToolCommands(backend: BackendRunner): Record<string, AxiCliCommand<undefined>> {
-  return Object.fromEntries(TOOL_NAMES.map((tool) => [tool, async (args: string[]) => toolCommand(tool, args, backend)]));
+export function createToolCommands(
+  backend: BackendRunner,
+): Record<string, AxiCliCommand<undefined>> {
+  return Object.fromEntries(
+    TOOL_NAMES.map((tool) => [tool, async (args: string[]) => toolCommand(tool, args, backend)]),
+  );
 }
 
 export function createForwardToolCommand(backend: BackendRunner): AxiCliCommand<undefined> {
@@ -40,14 +44,21 @@ export async function toolCommand(
   backend: BackendRunner,
   allowUnknown = false,
 ): Promise<string | JsonObject> {
-  if (!allowUnknown && !TOOLS.has(tool)) validation(`unknown MCP tool: ${tool}`, "Run `cbm-axi --help`");
+  if (!allowUnknown && !TOOLS.has(tool))
+    validation(`unknown MCP tool: ${tool}`, "Run `cbm-axi --help`");
   const parsed = outputFlags(args);
   if (parsed.help) return toolHelp(tool, backend);
   const toolArgs = defaultToolArgs(tool, parsed.toolArgs);
-  const result = await executeBackend(backend, ["cli", "--json", tool, ...serializeToolArgs(toolArgs)]);
+  const result = await executeBackend(backend, [
+    "cli",
+    "--json",
+    tool,
+    ...serializeToolArgs(toolArgs),
+  ]);
   const value = decodeBackendResult(result, tool);
 
-  if (value === undefined || value === null) operational("backend returned no result", `Run \`cbm-axi ${tool} --help\``);
+  if (value === undefined || value === null)
+    operational("backend returned no result", `Run \`cbm-axi ${tool} --help\``);
   if (parsed.full) return renderable(value);
 
   const { value: normalized, truncated } = normalizeResponse(tool, value, parsed.fields);
@@ -55,7 +66,8 @@ export async function toolCommand(
   const paging = responsePaging(output);
   const help: string[] = [];
   if (truncated) help.push(`Run \`${commandWith(tool, toolArgs, "--full")}\` for complete text`);
-  if (paging.more && paging.key) help.push(`Run \`${nextPageCommand(tool, toolArgs)}\` for remaining ${paging.key}`);
+  if (paging.more && paging.key)
+    help.push(`Run \`${nextPageCommand(tool, toolArgs)}\` for remaining ${paging.key}`);
   if (paging.key && paging.total === 0) {
     output[paging.key] = "0 found";
     help.push(`Run \`cbm-axi ${tool} --help\` for filters`);
@@ -113,7 +125,8 @@ function defaultToolArgs(tool: string, args: string[]): string[] {
 }
 
 export function serializeToolArgs(args: string[]): string[] {
-  if (args.length === 0 || (args.length === 1 && isJson(args[0])) || args.includes("--args-file")) return args;
+  if (args.length === 0 || (args.length === 1 && isJson(args[0])) || args.includes("--args-file"))
+    return args;
   const values: JsonObject = {};
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
@@ -133,7 +146,10 @@ function toolArgValue(key: string, value: string): unknown {
   if (key === "repo_path" && (/^[A-Za-z]:[\\/]/.test(value) || value.startsWith("\\\\"))) {
     value = value.replaceAll("\\", "/");
   }
-  if (["limit", "offset", "depth", "max_depth", "min_degree", "max_degree"].includes(key) && /^-?\d+$/.test(value)) {
+  if (
+    ["limit", "offset", "depth", "max_depth", "min_degree", "max_degree"].includes(key) &&
+    /^-?\d+$/.test(value)
+  ) {
     return Number(value);
   }
   if ((value.startsWith("[") || value.startsWith("{")) && isJson(value)) return JSON.parse(value);
@@ -162,7 +178,10 @@ function shellQuote(value: string): string {
 }
 
 function splitFields(value: string): string[] {
-  return value.split(",").map((field) => field.trim()).filter(Boolean);
+  return value
+    .split(",")
+    .map((field) => field.trim())
+    .filter(Boolean);
 }
 
 function isJson(value: string): boolean {

@@ -14,7 +14,8 @@ export function createSetupCommand(
       binaryNames: ["cbm-axi"],
       onError: (message) => errors.push(message),
     });
-    if (errors.length > 0) operational(errors.join("; "), "Run `cbm-axi setup hooks` after fixing the reported files");
+    if (errors.length > 0)
+      operational(errors.join("; "), "Run `cbm-axi setup hooks` after fixing the reported files");
     return { setup: "hooks installed or already up to date" };
   };
 }

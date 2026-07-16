@@ -14,7 +14,9 @@ export const runBackend: BackendRunner = (args) =>
     let stderr = "";
     child.stdout.setEncoding("utf8").on("data", (chunk: string) => (stdout += chunk));
     child.stderr.setEncoding("utf8").on("data", (chunk: string) => (stderr += chunk));
-    child.once("error", (error) => reject(new Error(`${BACKEND} is not installed or not on PATH: ${error.message}`)));
+    child.once("error", (error) =>
+      reject(new Error(`${BACKEND} is not installed or not on PATH: ${error.message}`)),
+    );
     child.once("close", (status) => fulfill({ stdout, stderr, status: status ?? 1 }));
   });
 
@@ -29,8 +31,10 @@ export async function executeBackend(
   } catch (error) {
     operational(error instanceof Error ? error.message : String(error));
   }
-  if (!allowFailure && result.status !== 0 && result.stderr.trim()) operational(result.stderr.trim());
-  if (!allowFailure && result.status !== 0 && !result.stdout.trim()) operational(`backend exited with status ${result.status}`);
+  if (!allowFailure && result.status !== 0 && result.stderr.trim())
+    operational(result.stderr.trim());
+  if (!allowFailure && result.status !== 0 && !result.stdout.trim())
+    operational(`backend exited with status ${result.status}`);
   return result;
 }
 
@@ -83,5 +87,10 @@ function contentText(value: JsonObject): string {
 }
 
 function firstUsefulLine(value: string): string {
-  return value.split("\n").map((line) => line.trim()).find((line) => line && !line.startsWith("level=") && !line.startsWith("warning:")) ?? "";
+  return (
+    value
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line && !line.startsWith("level=") && !line.startsWith("warning:")) ?? ""
+  );
 }
