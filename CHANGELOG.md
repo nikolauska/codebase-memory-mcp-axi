@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.3.1] - 2026-07-16
+
+### Fixed
+
+- Fixed release-tag version validation so npm publication can run in GitHub Actions.
+
 ## [0.3.0] - 2026-07-16
 
 ### Changed

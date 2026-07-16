@@ -36,7 +36,7 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: npm
       - run: npm ci
-      - run: test "v$(node -p \"require('./package.json').version\")" = "${GITHUB_REF_NAME}"
+      - run: node -e "const v='v'+require('./package.json').version; if(v!==process.env.GITHUB_REF_NAME) throw new Error(v+' != '+process.env.GITHUB_REF_NAME)"
       - run: npm publish --provenance --access public
       - run: gh release create "${GITHUB_REF_NAME}" --verify-tag --generate-notes
         env:

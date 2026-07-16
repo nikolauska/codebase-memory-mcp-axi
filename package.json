@@ -1,6 +1,6 @@
 {
   "name": "@nikolauska/cbm-axi",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Agent-oriented CLI for compact codebase-memory graph queries",
   "license": "MIT",
   "author": "Niko Lehtovirta",
