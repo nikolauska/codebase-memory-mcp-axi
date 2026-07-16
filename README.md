@@ -1,6 +1,6 @@
 # cbm-axi
 
-Agent-oriented codebase-memory-mcp CLI written in Go. It wraps the installed `codebase-memory-mcp` executable and emits compact TOON on stdout while keeping JSON internally.
+Agent-oriented Node.js CLI for compact codebase-memory graph queries. It wraps the installed `codebase-memory-mcp` executable and uses [`axi-sdk-js`](https://www.npmjs.com/package/axi-sdk-js) for command dispatch, official TOON output, structured errors, updates, and optional agent hooks.
 
 ## Install
 
@@ -18,15 +18,17 @@ Then install `cbm-axi` separately:
 npm install --global @nikolauska/cbm-axi
 ```
 
-Or build it from source:
+Node.js 24 or newer is required. To build from source:
 
 ```sh
 git clone https://github.com/nikolauska/codebase-memory-mcp-axi.git
 cd codebase-memory-mcp-axi
-make install
+npm ci
+npm run build
+npm install --global .
 ```
 
-Both executables must be available on `PATH`. Optionally run `cbm-axi setup` to install user-level session hooks for Claude Code, Codex, and OpenCode.
+Both executables must be available on `PATH`. Optionally run `cbm-axi setup hooks` to install user-level session hooks for Claude Code, Codex, and OpenCode.
 
 ### Claude Code, Codex, and GitHub Copilot CLI plugins
 
@@ -49,9 +51,9 @@ copilot plugin install cbm-axi@codebase-memory-mcp-axi
 The plugin installs the skill and bundled session hooks. It does not install either executable;
 install `cbm-axi` and `codebase-memory-mcp` separately and ensure both are on `PATH` before using it.
 Uninstalling the plugin removes its skill and hooks. Any user-level hooks created by
-`cbm-axi setup` must be removed separately.
+`cbm-axi setup hooks` must be removed separately.
 
-`setup` installs idempotent user-level session integrations for Claude Code, Codex, and OpenCode. The repository also includes the installable [`cbm-axi` skill](skills/cbm-axi/SKILL.md). Use either the hooks or the skill; both are not required.
+`setup hooks` installs idempotent user-level session-start integrations for Claude Code, Codex, and OpenCode. The repository also includes the installable [`cbm-axi` skill](skills/cbm-axi/SKILL.md). Use either the hooks or the skill; both are not required.
 
 ## Use
 
@@ -64,26 +66,27 @@ cbm-axi get_code_snippet --project <project> --qualified-name <qualified-name> -
 cbm-axi trace_path --project <project> --function-name <name> --direction both
 cbm-axi get_architecture --project <project>
 cbm-axi query_graph --project <project> --query "MATCH (f:Function) RETURN f.name LIMIT 20"
+cbm-axi update --check
 ```
 
 All upstream MCP tools are available as matching subcommands. Use `cbm-axi tool <name>` for a forward-compatible invocation. Add `--fields a,b` for a smaller output projection and `--full` to disable detail truncation. Piped JSON and `--args-file` are passed through to the upstream CLI.
 
-Errors are structured on stdout. Diagnostics stay on stderr. Exit codes are `0` for success, `1` for operational failures, and `2` for usage errors.
+Errors are structured on stdout. Diagnostics stay on stderr. Exit codes are `0` for success, `1` for operational failures, and `2` for usage errors. `cbm-axi update` upgrades a global npm installation; use `cbm-axi update --check` for a read-only version check.
 
 ## Develop
 
-Install the Go and Node.js versions pinned by [mise](https://mise.jdx.dev/):
+Install the Node.js version pinned by [mise](https://mise.jdx.dev/):
 
 ```sh
 mise install
 ```
 
-Then run the development checks through the Makefile:
+Then install dependencies and run the npm scripts:
 
 ```sh
-make fmt
-make test
-make lint
-make check-skill
-make build
+npm ci
+npm run lint
+npm test
+npm run build
+npm pack --dry-run
 ```

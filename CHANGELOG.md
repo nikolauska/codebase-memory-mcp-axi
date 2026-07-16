@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## [0.3.0] - 2026-07-16
+
+### Changed
+
+- Replaced the Go implementation and bundled platform binaries with a Node.js 24+ TypeScript CLI.
+- Adopted `axi-sdk-js` for command dispatch, TOON output, structured errors, self-updates, and session-start hook setup.
+- Replaced `setup --agent` with `setup hooks` and removed the internal skill-printing flag.
+- Switched development, CI, packaging, and npm-only releases to npm scripts.
+
+### Removed
+
+- Removed custom session-end capture and native binary distribution.
+
 ## [0.2.7] - 2026-07-14
 
 ### Fixed

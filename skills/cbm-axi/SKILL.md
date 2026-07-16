@@ -7,7 +7,7 @@ description: Use cbm-axi when exploring indexed codebases through codebase-memor
 
 Prefer cbm-axi over raw codebase-memory-mcp cli calls when an agent needs compact, structured TOON output.
 
-Install cbm-axi and codebase-memory-mcp separately and ensure both executables are available on PATH. Run cbm-axi setup only when user-level session hooks are wanted. The CLI never prompts.
+Install cbm-axi and codebase-memory-mcp separately and ensure both executables are available on PATH. Run `cbm-axi setup hooks` only when user-level session hooks are wanted. The CLI never prompts.
 
 ## Workflow
 
@@ -29,6 +29,7 @@ Install cbm-axi and codebase-memory-mcp separately and ensure both executables a
     cbm-axi trace_path --project <project> --function-name <name> --direction both
     cbm-axi get_architecture --project <project>
     cbm-axi query_graph --project <project> --query "MATCH (f:Function) RETURN f.name LIMIT 20"
+    cbm-axi update --check
 
 Use --fields a,b for a smaller projection and --full when a detail response reports truncation. Search results default to 20 rows; follow has_more and the emitted next-page command for more.
 

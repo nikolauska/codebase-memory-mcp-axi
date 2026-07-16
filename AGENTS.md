@@ -3,133 +3,124 @@
 
 ## CRITICAL
 
-- MUST: Use the repository Makefile for build, install, test, lint, and release tasks.
-- MUST: Run `make lint` before committing.
-- MUST: Run `make test` before opening a pull request.
-- MUST: Run `make check-skill` when changing `skills/cbm-axi/`.
-- MUST: Update both `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` whenever changing the release version.
-- NEVER: Add third-party dependencies without updating `go.mod` and `go.sum` deliberately; this project currently uses only the standard library.
-- NEVER: Commit `cbm-axi` or `dist/`; they are generated release outputs.
-- NEVER: Read, log, or commit secrets, credentials, or user configuration contents.
+- MUST: Use npm; `package-lock.json` is authoritative. Do not use yarn, pnpm, or bun.
+- MUST: Run `npm run lint` before committing.
+- MUST: Run `npm test` before opening a pull request.
+- MUST: Keep `package.json`, `package-lock.json`, `.claude-plugin/plugin.json`, and `.codex-plugin/plugin.json` versions aligned for releases.
+- NEVER: Run `npm publish` locally; tagged CI releases own publication.
+- NEVER: Commit `dist/` or `node_modules/`; they are generated outputs.
+- NEVER: Read, log, or commit secrets, credentials, private keys, or user configuration contents.
 - NEVER: Skip hooks with `--no-verify` or force-push shared branches.
-- PREFER: Use repository-aware file editing and `rg`/`rg --files` for exact source and file discovery.
-- ON FAIL: Read the complete error output, confirm the upstream `codebase-memory-mcp` prerequisite, then retry the narrowest failing Make target.
+- PREFER: `rg`/`rg --files` for discovery and repository-aware patches for edits.
+- ON FAIL: Read the complete output, fix the narrowest reported cause, then rerun only the failing npm script.
 
 ## Domain & Context
 
-- Goal: Provide an agent-oriented Go CLI that wraps the installed `codebase-memory-mcp` executable and emits compact TOON output.
-- Type: CLI/Tool
+- Goal: Provide an agent-oriented Node.js CLI that wraps an installed graph backend and emits compact TOON output.
+- Type: Single-package CLI/Tool
 - License: MIT
 - Key Terms:
-  - `TOON`: The compact tabular output format printed by `cbm-axi`.
-  - `upstream CLI`: The installed `codebase-memory-mcp` executable invoked internally with JSON output.
-  - `user hooks`: Claude Code, Codex, and OpenCode session integrations configured by `cbm-axi setup`.
+  - `TOON`: Compact structured output serialized by `axi-sdk-js`.
+  - `upstream CLI`: The installed graph executable invoked internally with JSON output.
+  - `session hooks`: Optional Claude Code, Codex, and OpenCode integrations installed by `cbm-axi setup hooks`.
 
 ## Data & State
 
-- Backend source of truth: The upstream `codebase-memory-mcp` process and its configured graph storage.
-- User integrations: `~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.codex/config.toml`, and `~/.config/opencode/plugins/cbm-axi.ts`.
-- Session capture: User cache data written by `captureSession` in `setup.go`.
+- Backend source of truth: The upstream CLI process and its configured graph storage.
+- User integrations: Hook files managed by `axi-sdk-js`; tests must use temporary directories or injected installers.
+- CLI state: Stateless except for explicit hook installation and SDK self-update commands.
 
 ## Execution Context
 
 - Run on: Host
-- Prefix: N/A; `codebase-memory-mcp` must be on `PATH` for live commands.
-- Releases: GitHub Actions packages binaries when a `v*` tag is pushed.
+- Prefix: N/A; Node.js 24+ and the upstream CLI must be on `PATH`.
+- Releases: Tagged GitHub Actions runs publish the npm package and create release notes.
 
 ## Commands
 
 ```bash
 # install
-make install                 # ON FAIL: verify Go 1.22+ and the writable install directory.
-# test
-make test                    # ON FAIL: rerun focused tests with `GO111MODULE=off go test -run '^Test' .`.
+npm ci                         # ON FAIL: verify Node 24+, registry access, and the first lockfile diagnostic.
 # lint
-make lint                    # ON FAIL: run `make fmt`, then rerun `make lint`.
-# format
-make fmt                     # ON FAIL: inspect the reported gofmt or filesystem error.
-# skill validation
-make check-skill              # ON FAIL: run `make build` and compare `go run . --print-skill` with the skill file.
+npm run lint                   # ON FAIL: fix the first TypeScript or node --check diagnostic, then rerun npm run lint.
+# test
+npm test                       # ON FAIL: run node --test --test-name-pattern '<name>' test/cbm-axi.test.js, then rerun npm test.
 # build
-make build                   # ON FAIL: verify the Go toolchain and inspect compiler output.
-# release binaries
-make dist VERSION=v0.1.0     # ON FAIL: inspect the first cross-compilation error and rerun after fixing it.
+npm run build                  # ON FAIL: run npm run lint to isolate type errors, then rerun npm run build.
+# package preview
+npm pack --dry-run             # ON FAIL: run npm run build, verify package.json files, then rerun npm pack --dry-run.
 ```
 
 ## Structure
 
 ```
-main.go                       # CLI dispatch and upstream adapter
-setup.go                      # user hook configuration and session capture
-toon.go                       # standard-library TOON encoder
-skill.go                      # embedded skill output
-main_test.go                  # unit and integration-style tests
-skills/cbm-axi/               # installable agent skill
-.github/workflows/ci.yml      # CI and tag release workflow
-cbm-axi                       # generated local binary; do not edit
-dist/                         # generated release binaries; do not edit
+src/bin/                       # Executable entrypoint
+src/cli.ts                     # CLI and adapter logic
+test/                          # Node test suite
+skills/cbm-axi/                # Installable agent skill
+hooks/                         # Plugin session hooks
+.claude-plugin/                # Claude plugin metadata
+.codex-plugin/                 # Codex plugin metadata
+.github/workflows/ci.yml       # CI and npm release
+package.json                   # npm scripts and metadata
+tsconfig.json                  # TypeScript compiler config
+mise.toml                      # Node runtime pin
+dist/                          # Compiled JavaScript (generated -- do not edit)
 ```
 
 ## Patterns
 
-- **Module:** Go module `github.com/nikolauska/codebase-memory-mcp-axi`; use standard-library packages for new code unless a dependency is justified.
-- **Async:** Synchronous command execution with `os/exec`; use direct return values and errors for new code.
-- **Naming:** Lowercase Go filenames, `_test.go` test suffixes, exported Go identifiers only when package API visibility requires them, and descriptive camelCase functions.
-- **CLI output:** Keep stdout machine-readable TOON or structured errors; send diagnostics to stderr and preserve exit codes `0`, `1`, and `2`.
-- **Backend boundary:** Keep upstream process invocation and JSON decoding in the adapter layer; keep rendering and hook setup separate.
+- **Module:** Use ESM TypeScript with `.js` extensions in relative imports; never add CommonJS source.
+- **Async:** Use async/await and Promise-returning backend adapters for new asynchronous logic.
+- **Naming:** Use lowercase filenames, camelCase functions, PascalCase types, and UPPER_SNAKE_CASE constants.
+- **CLI runtime:** Register commands through `runAxiCli`; return plain objects and throw `AxiError` rather than rendering output manually.
+- **Backend boundary:** Keep process invocation and JSON-envelope decoding in the adapter flow; keep projection and truncation independent of subprocess details.
+- **Dependencies:** Prefer Node standard-library modules; add runtime packages only when requested and commit lockfile changes deliberately.
 
 ## Search
 
-- Exact source: `rg "pattern" --glob '*.go' .`
-- Files: `rg --files -g '*.go' -g '*.md' -g 'Makefile'`
-- Symbol discovery: `rg '^(func|type|const|var) ' --glob '*.go' .`
+- Exact source: `rg "pattern" --glob '*.ts' --glob '*.js' .`
+- Files: `rg --files -g '*.ts' -g '*.js' -g '*.md' -g '*.json'`
+- Symbols: `rg '^(export )?(async )?(function|class|interface|type|const) ' src test`
 
 ## Testing Strategy
 
-- Runner: Go tests through `make test`.
-- Tests: `main_test.go`; use focused `go test -run TestName .` for failures.
-- Fixtures: In-memory values and temporary home directories; no external test fixture service.
+- Runner: Node's built-in `node:test` through `npm test`.
+- Tests: `test/cbm-axi.test.js` imports compiled output from `dist/`.
+- Fixtures: Injected backend runners, captured stdout, and temporary user paths; never depend on live user configuration.
 - Coverage: No configured threshold.
-- E2E: Live upstream behavior is checked manually with an installed `codebase-memory-mcp` binary.
+- Live check: Run the installed CLI manually only when the upstream executable is available.
 
 ## Security
 
-- NEVER read or commit `.env`, credential files, private keys, or user hook configuration contents.
-- NEVER overwrite unrelated OpenCode plugins; `setup.go` only replaces its own marked plugin.
-- Backend diagnostics are suppressed from stdout and upstream logging is disabled with `CBM_LOG_LEVEL=none`.
+- NEVER read or commit `.env`, credential files, private keys, npm tokens, or user hook configuration contents.
+- NEVER overwrite unmanaged OpenCode plugins; delegate user hook ownership checks to `axi-sdk-js`.
+- Keep diagnostics out of successful structured output and disable upstream logging in the child-process environment.
 
 ## Env
 
-- Go: Version declared by `go.mod` (`1.22`).
-- Upstream backend: `codebase-memory-mcp` executable on `PATH` for live operation.
-- Install location: `GOBIN` if set, otherwise the active Go `GOPATH/bin`.
-- User home: `HOME` determines hook and session-cache paths used by `setup`.
-
-## Debugging
-
-- Help: `cbm-axi --help` or `cbm-axi <tool> --help`.
-- Version: `cbm-axi --version`.
-- Diagnostics: Read stderr while keeping stdout reserved for TOON and structured errors.
-- Backend failures: Confirm `codebase-memory-mcp` is installed and run its delegated help command.
+- Node.js: `24` in `mise.toml`; package minimum `>=24`.
+- Package manager: npm with committed `package-lock.json`.
+- TypeScript: Compiles `src/` to ignored `dist/` using `tsconfig.json`.
 
 ## Git
 
-- Branch: Use short feature branches such as `feat/<topic>` or `fix/<topic>`; release tags use `v<semver>`.
-- Commits: Use small conventional commits such as `feat: add adapter` or `fix: correct install output name`; explain what changed and why.
-- Hooks: No repository-managed hook configuration detected; do not use `--no-verify`.
-- PR: `make lint`, `make test`, `make check-skill`, and `make build` must pass.
+- Branch: Use short branches such as `feat/<topic>` or `fix/<topic>`.
+- Commit: Use conventional subjects such as `feat: add adapter`; explain what changed and why without co-author trailers.
+- Hooks: User-managed; never bypass repository or user hooks. No repository hook runner is configured.
+- PR: Require `npm run lint`, `npm test`, and `npm pack --dry-run`.
 
 ## CI
 
-- Checks: GitHub Actions runs lint, tests, skill validation, and build on pushes and pull requests.
-- Release: A `v*` tag waits for checks, builds six platform/architecture binaries, and creates a GitHub release with generated notes.
-- Artifacts: Release binaries are emitted under `dist/`.
+- Checks: Node.js 24 install, lint, tests, and npm package preview on pushes and pull requests.
+- Release: A `v*` tag publishes npm provenance and creates generated GitHub release notes.
+- Artifacts: None uploaded; `v*` releases publish the npm package and no native binaries.
 
 ## Tool Preferences
 
 | Task | Prefer | Avoid |
 |------|--------|-------|
-| Edit source | Repository-aware patch/editor | Shell redirection or generated-file edits |
-| Discover files | `rg --files` | `find`/recursive directory dumps |
+| Edit source | Repository-aware patch/editor | Shell redirection or generated output edits |
+| Discover files | `rg --files` | `find` or recursive directory dumps |
 | Search text | `rg` | `grep` when `rg` is available |
-| Validate changes | `make lint test check-skill build` | Skipping targeted checks |
+| Validate changes | npm scripts from `package.json` | Ad hoc compiler or test commands |
