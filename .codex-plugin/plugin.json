@@ -1,6 +1,6 @@
 {
   "name": "cbm-axi",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "An agent interface for compact codebase-memory graph queries.",
   "author": {
     "name": "Niko Lehtovirta",

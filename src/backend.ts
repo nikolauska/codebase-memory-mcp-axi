@@ -1,33 +1,73 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { operational } from "./errors.js";
 import { isObject, type BackendResult, type BackendRunner, type JsonObject } from "./shared.js";
 
 const BACKEND = "codebase-memory-mcp";
+const require = createRequire(import.meta.url);
 
-export const runBackend: BackendRunner = (args) =>
+function backendInvocation(args: string[]): { command: string; args: string[] } {
+  try {
+    const packageDirectory = dirname(require.resolve("codebase-memory-mcp/package.json"));
+    const binary = join(
+      packageDirectory,
+      "bin",
+      process.platform === "win32" ? `${BACKEND}.exe` : BACKEND,
+    );
+    if (existsSync(binary)) return { command: binary, args };
+    return {
+      command: process.execPath,
+      args: [require.resolve("codebase-memory-mcp/bin.js"), ...args],
+    };
+  } catch {
+    return { command: BACKEND, args };
+  }
+}
+
+export const runBackend: BackendRunner = (args, signal) =>
   new Promise((fulfill, reject) => {
-    const child = spawn(BACKEND, args, {
+    const invocation = backendInvocation(args);
+    const child = spawn(invocation.command, invocation.args, {
       env: { ...process.env, CBM_LOG_LEVEL: "none" },
       stdio: ["inherit", "pipe", "pipe"],
     });
     let stdout = "";
     let stderr = "";
+    let aborted = false;
+    const abort = () => {
+      aborted = true;
+      child.kill();
+    };
+    if (signal?.aborted) abort();
+    else signal?.addEventListener("abort", abort, { once: true });
     child.stdout.setEncoding("utf8").on("data", (chunk: string) => (stdout += chunk));
     child.stderr.setEncoding("utf8").on("data", (chunk: string) => (stderr += chunk));
     child.once("error", (error) =>
-      reject(new Error(`${BACKEND} is not installed or not on PATH: ${error.message}`)),
+      reject(new Error(`${BACKEND} failed to start: ${error.message}`)),
     );
-    child.once("close", (status) => fulfill({ stdout, stderr, status: status ?? 1 }));
+    child.once("close", (status) => {
+      signal?.removeEventListener("abort", abort);
+      if (aborted) {
+        reject(
+          signal?.reason instanceof Error ? signal.reason : new Error("Backend request cancelled"),
+        );
+        return;
+      }
+      fulfill({ stdout, stderr, status: status ?? 1 });
+    });
   });
 
 export async function executeBackend(
   backend: BackendRunner,
   args: string[],
   allowFailure = false,
+  signal?: AbortSignal,
 ): Promise<BackendResult> {
   let result: BackendResult;
   try {
-    result = await backend(args);
+    result = await backend(args, signal);
   } catch (error) {
     operational(error instanceof Error ? error.message : String(error));
   }

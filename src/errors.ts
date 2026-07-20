@@ -6,7 +6,7 @@ export function validation(message: string, suggestion = "Run `cbm-axi --help`")
 
 export function operational(
   message: string,
-  suggestion = "Confirm `codebase-memory-mcp` is installed and on PATH",
+  suggestion = "Reinstall `@nikolauska/cbm-axi` so its bundled backend is available",
 ): never {
   throw new AxiError(message || "command failed", "BACKEND_ERROR", [suggestion]);
 }

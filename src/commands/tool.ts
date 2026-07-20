@@ -22,6 +22,12 @@ export const TOOL_NAMES = [
 ] as const;
 export const TOOLS = new Set<string>(TOOL_NAMES);
 
+interface ToolCommandOptions {
+  allowUnknown?: boolean;
+  signal?: AbortSignal;
+  surface?: "cli" | "pi";
+}
+
 export function createToolCommands(
   backend: BackendRunner,
 ): Record<string, AxiCliCommand<undefined>> {
@@ -34,7 +40,7 @@ export function createForwardToolCommand(backend: BackendRunner): AxiCliCommand<
   return async (args) => {
     const [tool, ...toolArgs] = args;
     if (!tool) validation("tool requires a tool name", "Run `cbm-axi tool <name> [flags]`");
-    return toolCommand(tool, toolArgs, backend, true);
+    return toolCommand(tool, toolArgs, backend, { allowUnknown: true });
   };
 }
 
@@ -42,19 +48,20 @@ export async function toolCommand(
   tool: string,
   args: string[],
   backend: BackendRunner,
-  allowUnknown = false,
+  options: ToolCommandOptions = {},
 ): Promise<string | JsonObject> {
+  const { allowUnknown = false, signal, surface = "cli" } = options;
   if (!allowUnknown && !TOOLS.has(tool))
     validation(`unknown MCP tool: ${tool}`, "Run `cbm-axi --help`");
   const parsed = outputFlags(args);
   if (parsed.help) return toolHelp(tool, backend);
   const toolArgs = defaultToolArgs(tool, parsed.toolArgs);
-  const result = await executeBackend(backend, [
-    "cli",
-    "--json",
-    tool,
-    ...serializeToolArgs(toolArgs),
-  ]);
+  const result = await executeBackend(
+    backend,
+    ["cli", "--json", tool, ...serializeToolArgs(toolArgs)],
+    false,
+    signal,
+  );
   const value = decodeBackendResult(result, tool);
 
   if (value === undefined || value === null)
@@ -65,12 +72,25 @@ export async function toolCommand(
   const output = renderable(normalized);
   const paging = responsePaging(output);
   const help: string[] = [];
-  if (truncated) help.push(`Run \`${commandWith(tool, toolArgs, "--full")}\` for complete text`);
+  if (truncated)
+    help.push(
+      surface === "pi"
+        ? "Call `cbm_axi` again with `full: true` for complete text"
+        : `Run \`${commandWith(tool, toolArgs, "--full")}\` for complete text`,
+    );
   if (paging.more && paging.key)
-    help.push(`Run \`${nextPageCommand(tool, toolArgs)}\` for remaining ${paging.key}`);
+    help.push(
+      surface === "pi"
+        ? `Call \`cbm_axi\` again with \`args.offset\` set to \`<next-offset>\` for remaining ${paging.key}`
+        : `Run \`${nextPageCommand(tool, toolArgs)}\` for remaining ${paging.key}`,
+    );
   if (paging.key && paging.total === 0) {
     output[paging.key] = "0 found";
-    help.push(`Run \`cbm-axi ${tool} --help\` for filters`);
+    help.push(
+      surface === "pi"
+        ? `Call \`cbm_axi\` with action \`${tool}\` and suitable filters in \`args\``
+        : `Run \`cbm-axi ${tool} --help\` for filters`,
+    );
   }
   if (help.length > 0) output.help = help;
   return output;
@@ -152,7 +172,13 @@ function toolArgValue(key: string, value: string): unknown {
   ) {
     return Number(value);
   }
-  if ((value.startsWith("[") || value.startsWith("{")) && isJson(value)) return JSON.parse(value);
+  if (value.startsWith("[") || value.startsWith("{")) {
+    try {
+      return JSON.parse(value);
+    } catch {
+      // Keep malformed structured values as strings for backend validation.
+    }
+  }
   if (value === "true" || value === "false") return value === "true";
   return value;
 }

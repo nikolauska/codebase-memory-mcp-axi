@@ -1,20 +1,35 @@
 # Changelog
 
+<!-- markdownlint-disable MD024 -->
+
 All notable changes to this project are documented here.
+
+## [0.4.0] - 2026-07-20
+
+### Added
+
+- Added a native pi package extension that exposes compact codebase-memory
+  queries through the `cbm_axi` tool.
+- Added the npm-distributed `codebase-memory-mcp` backend so pi and standalone
+  installs no longer require a separate executable installation.
 
 ## [0.3.1] - 2026-07-16
 
 ### Fixed
 
-- Fixed release-tag version validation so npm publication can run in GitHub Actions.
+- Fixed release-tag version validation so npm publication can run in GitHub
+  Actions.
 
 ## [0.3.0] - 2026-07-16
 
 ### Changed
 
-- Replaced the Go implementation and bundled platform binaries with a Node.js 24+ TypeScript CLI.
-- Adopted `axi-sdk-js` for command dispatch, TOON output, structured errors, self-updates, and session-start hook setup.
-- Replaced `setup --agent` with `setup hooks` and removed the internal skill-printing flag.
+- Replaced the Go implementation and bundled platform binaries with a Node.js
+  24+ TypeScript CLI.
+- Adopted `axi-sdk-js` for command dispatch, TOON output, structured errors,
+  self-updates, and session-start hook setup.
+- Replaced `setup --agent` with `setup hooks` and removed the internal
+  skill-printing flag.
 - Switched development, CI, packaging, and npm-only releases to npm scripts.
 
 ### Removed
@@ -25,7 +40,8 @@ All notable changes to this project are documented here.
 
 ### Fixed
 
-- Tell agents to request elevated filesystem access when indexing cannot write to the user cache.
+- Tell agents to request elevated filesystem access when indexing cannot write
+  to the user cache.
 
 ## [0.2.6] - 2026-07-14
 
@@ -37,19 +53,22 @@ All notable changes to this project are documented here.
 
 ### Fixed
 
-- Store plugin-managed graph caches in the plugin's writable data directory so sandboxed indexing does not require escalation.
+- Store plugin-managed graph caches in the plugin's writable data directory so
+  sandboxed indexing does not require escalation.
 
 ## [0.2.2] - 2026-07-13
 
 ### Fixed
 
-- Pinned plugin-managed `cbm-axi` and `codebase-memory-mcp` downloads to compatible releases and refresh them when their declared versions change.
+- Pinned plugin-managed `cbm-axi` and `codebase-memory-mcp` downloads to
+  compatible releases and refresh them when their declared versions change.
 
 ## [0.2.1] - 2026-07-13
 
 ### Fixed
 
-- Fixed MCP tool flags being forwarded directly instead of serialized as the backend's JSON argument object, including Windows repository paths.
+- Fixed MCP tool flags being forwarded directly instead of serialized as the
+  backend's JSON argument object, including Windows repository paths.
 
 ## [0.2.0] - 2026-07-11
 
@@ -57,24 +76,29 @@ All notable changes to this project are documented here.
 
 - Added Claude Code and Codex plugin marketplace manifests.
 - Added plugin-local executable installation with SHA-256 verification.
-- Added bundled session hooks using persistent plugin data instead of global PATH installs.
+- Added bundled session hooks using persistent plugin data instead of global
+  PATH installs.
 
 ### Changed
 
-- The plugin launcher can find `codebase-memory-mcp` beside the local `cbm-axi` binary.
+- The plugin launcher can find `codebase-memory-mcp` beside the local `cbm-axi`
+  binary.
 - Legacy `cbm-axi setup` hooks remain available for non-plugin installations.
 
 ## [0.1.1] - 2026-07-10
 
 ### Added
 
-- Added project-specific `AGENTS.md` and `CLAUDE.md` guidance for repository agents.
+- Added project-specific `AGENTS.md` and `CLAUDE.md` guidance for repository
+  agents.
 
 ## [0.1.0] - 2026-07-10
 
 ### Added
 
 - Added `cbm-axi`, a Go AXI wrapper around `codebase-memory-mcp`.
-- Added compact TOON output, field projection, truncation, pagination hints, structured errors, and a read-only dashboard.
-- Added user-level Claude Code, Codex, and OpenCode hook setup with session-end file capture.
+- Added compact TOON output, field projection, truncation, pagination hints,
+  structured errors, and a read-only dashboard.
+- Added user-level Claude Code, Codex, and OpenCode hook setup with session-end
+  file capture.
 - Added an installable agent skill, CI, cross-platform packaging, and tests.
