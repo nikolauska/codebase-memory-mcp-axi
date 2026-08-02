@@ -1,11 +1,9 @@
 import assert from "node:assert/strict";
-import { rm } from "node:fs/promises";
-import { dirname } from "node:path";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { run } from "../dist/cli.js";
 import { currentProject } from "../dist/commands/dashboard.js";
 import { serializeToolArgs } from "../dist/commands/tool.js";
-import { registerCbmExtension } from "../dist/extension.js";
 
 function capture() {
   let output = "";
@@ -50,61 +48,6 @@ test("selects the closest indexed project", () => {
     ),
     "child",
   );
-});
-
-test("registers a native pi tool backed by the package adapter", async () => {
-  let tool;
-  const controller = new AbortController();
-  registerCbmExtension(
-    { registerTool: (definition) => (tool = definition) },
-    backend((args, signal) => {
-      assert.equal(signal, controller.signal);
-      assert.deepEqual(args, [
-        "cli",
-        "--json",
-        "search_graph",
-        '{"project":"demo","query":"adapter","limit":20}',
-      ]);
-      return {
-        stdout: JSON.stringify({
-          structuredContent: { total: 1, results: [{ name: "registerCbmExtension" }] },
-        }),
-      };
-    }),
-  );
-
-  assert.equal(tool.name, "cbm_axi");
-  const result = await tool.execute(
-    "call-1",
-    {
-      action: "search_graph",
-      args: { project: "demo", query: "adapter" },
-    },
-    controller.signal,
-  );
-  assert.match(result.content[0].text, /results\[1\]\{name,qualified_name,label,file_path\}/);
-  assert.match(result.content[0].text, /registerCbmExtension/);
-});
-
-test("keeps a preview when a TOON line exceeds the output limit", async () => {
-  let tool;
-  registerCbmExtension(
-    { registerTool: (definition) => (tool = definition) },
-    backend(() => ({
-      stdout: JSON.stringify({ structuredContent: { source: "x".repeat(60_000) } }),
-    })),
-  );
-
-  const result = await tool.execute("call-2", {
-    action: "get_code_snippet",
-    full: true,
-  });
-  const text = result.content[0].text;
-  assert.match(text, /^source: x+/);
-  assert.match(text, /\[truncated\]/);
-  const outputPath = /Full output saved to: (.+)]$/.exec(text)?.[1];
-  assert.ok(outputPath);
-  await rm(dirname(outputPath), { recursive: true, force: true });
 });
 
 test("runs MCP tools through the SDK and compacts output", async () => {
@@ -208,6 +151,16 @@ test("forwards future tools through the tool command", async () => {
     }),
   });
   assert.match(io.output(), /status: ok/);
+});
+
+test("reports how to install a missing MCP binary", () => {
+  const result = spawnSync(process.execPath, ["dist/bin/cbm-axi.js", "list_projects"], {
+    encoding: "utf8",
+    env: { ...process.env, PATH: "" },
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /codebase-memory-mcp failed to start/);
+  assert.match(result.stdout, /Install `codebase-memory-mcp` globally/);
 });
 
 test("installs SDK hooks through setup hooks", async () => {

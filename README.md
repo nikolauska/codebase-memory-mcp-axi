@@ -1,26 +1,20 @@
 # cbm-axi
 
-Agent-oriented Node.js CLI and pi extension for compact codebase-memory graph queries. It wraps the package-local `codebase-memory-mcp` backend and uses [`axi-sdk-js`](https://www.npmjs.com/package/axi-sdk-js) for command dispatch, official TOON output, structured errors, updates, and optional agent hooks.
+Agent-oriented Node.js CLI for compact codebase-memory graph queries. It wraps the separately installed `codebase-memory-mcp` binary and uses [`axi-sdk-js`](https://www.npmjs.com/package/axi-sdk-js) for command dispatch, official TOON output, structured errors, updates, and optional agent hooks.
 
 ## Install
 
-### pi
-
-Install the native pi extension, skill, and backend with one command:
+Install the MCP server and AXI as separate standalone binaries on `PATH`:
 
 ```sh
-pi install npm:@nikolauska/cbm-axi
-```
-
-The extension registers the `cbm_axi` tool and uses the package-local `codebase-memory-mcp` backend. No global executable installation is required.
-
-### Standalone CLI
-
-```sh
+npm install --global codebase-memory-mcp
 npm install --global @nikolauska/cbm-axi
 ```
 
-The npm dependency installs the platform-specific `codebase-memory-mcp` backend automatically. Node.js 24 or newer is required. To build from source:
+`cbm-axi` only detects and invokes `codebase-memory-mcp`; it never installs,
+downloads, updates, or otherwise manages the MCP server.
+
+Node.js 24 or newer is required. To build `cbm-axi` from source:
 
 ```sh
 git clone https://github.com/nikolauska/codebase-memory-mcp-axi.git
@@ -30,32 +24,24 @@ npm run build
 npm install --global .
 ```
 
-Optionally run `cbm-axi setup hooks` to install user-level session hooks for Claude Code, Codex, and OpenCode.
+Session hooks are an explicit, optional integration:
 
-### Claude Code, Codex, and GitHub Copilot CLI plugins
-
-Add and install the marketplace plugin:
-
-```text
-# Claude Code
-/plugin marketplace add nikolauska/codebase-memory-mcp-axi
-/plugin install cbm-axi@codebase-memory-mcp-axi
-
-# Codex
-codex plugin marketplace add nikolauska/codebase-memory-mcp-axi
-codex plugin add cbm-axi@codebase-memory-mcp-axi
-
-# GitHub Copilot CLI
-copilot plugin marketplace add nikolauska/codebase-memory-mcp-axi
-copilot plugin install cbm-axi@codebase-memory-mcp-axi
+```sh
+cbm-axi setup hooks
 ```
 
-The plugin installs the skill and bundled session hooks. It does not install the npm package;
-install `@nikolauska/cbm-axi` globally before using it. The package includes the backend dependency.
-Uninstalling the plugin removes its skill and hooks. Any user-level hooks created by
-`cbm-axi setup hooks` must be removed separately.
+The command idempotently installs or repairs user-level session-start hooks for
+Claude Code, Codex, and OpenCode. Hooks resolve `cbm-axi` from `PATH` when it
+identifies the current executable and otherwise retain its absolute path.
 
-`setup hooks` installs idempotent user-level session-start integrations for Claude Code, Codex, and OpenCode. The repository also includes the installable [`cbm-axi` skill](skills/cbm-axi/SKILL.md). Use either the hooks or the skill; both are not required.
+As a lower-overhead alternative, install the static [`cbm-axi` skill](skills/cbm-axi/SKILL.md):
+
+```sh
+skills add nikolauska/codebase-memory-mcp-axi --skill cbm-axi
+```
+
+Hooks provide ambient session context; the skill loads on demand. Install either
+integration or both after installing the standalone binaries.
 
 ## Use
 
