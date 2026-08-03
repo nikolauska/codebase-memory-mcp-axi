@@ -4,6 +4,14 @@
 
 All notable changes to this project are documented here.
 
+## [0.5.0] - 2026-08-03
+
+### Removed
+
+- Removed the native Pi extension, its plugin manifests, and bundled
+  `codebase-memory-mcp` backend dependency. Use the standalone `cbm-axi` CLI
+  with an installed upstream backend.
+
 ## [0.4.0] - 2026-07-20
 
 ### Added
