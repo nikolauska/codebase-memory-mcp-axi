@@ -24,8 +24,7 @@ async function verifyBackendVersion(backend: BackendRunner, signal?: AbortSignal
     version[0] < REQUIRED_BACKEND_VERSION[0] ||
     (version[0] === REQUIRED_BACKEND_VERSION[0] &&
       (version[1] < REQUIRED_BACKEND_VERSION[1] ||
-        (version[1] === REQUIRED_BACKEND_VERSION[1] &&
-          version[2] < REQUIRED_BACKEND_VERSION[2])))
+        (version[1] === REQUIRED_BACKEND_VERSION[1] && version[2] < REQUIRED_BACKEND_VERSION[2])))
   ) {
     operational(
       "codebase-memory-mcp 0.10.2 or newer is required",

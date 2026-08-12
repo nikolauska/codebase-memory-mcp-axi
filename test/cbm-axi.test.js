@@ -16,7 +16,8 @@ function capture() {
 
 function backend(handler) {
   return async (args, signal) => {
-    if (args[0] === "--version") return { status: 0, stderr: "", stdout: "codebase-memory-mcp 0.10.2\n" };
+    if (args[0] === "--version")
+      return { status: 0, stderr: "", stdout: "codebase-memory-mcp 0.10.2\n" };
     return { status: 0, stderr: "", ...handler(args, signal) };
   };
 }
@@ -54,10 +55,7 @@ test("requires codebase-memory-mcp 0.10.2 or newer", async () => {
       stderr: "",
       stdout: `codebase-memory-mcp ${version}\n`,
     }));
-    await assert.rejects(
-      unsupported(["cli", "--json", "list_projects"]),
-      /0\.10\.2 or newer/,
-    );
+    await assert.rejects(unsupported(["cli", "--json", "list_projects"]), /0\.10\.2 or newer/);
   }
 });
 
@@ -82,7 +80,15 @@ test("runs MCP tools through the SDK and compacts output", async () => {
     version: "0.3.0",
     stdout: io.stdout,
     backend: backend((args) => {
-      assert.deepEqual(args, ["cli", "--json", "search_graph", "--project", "demo", "--limit", "20"]);
+      assert.deepEqual(args, [
+        "cli",
+        "--json",
+        "search_graph",
+        "--project",
+        "demo",
+        "--limit",
+        "20",
+      ]);
       return {
         stdout: JSON.stringify({
           structuredContent: {
