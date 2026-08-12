@@ -10,9 +10,8 @@ description: >
 Use the `cbm-axi` CLI for compact, structured TOON output. Install
 `codebase-memory-mcp` 0.10.2 or newer and `@nikolauska/cbm-axi` separately so
 both binaries are on `PATH`; the AXI never installs or manages the MCP server.
-For sustained exploration, users may run `codebase-memory-mcp daemon start`;
-the AXI does not manage that daemon. Run `cbm-axi setup hooks` only when
-user-level session hooks are wanted. The CLI never prompts.
+Run `cbm-axi setup hooks` only when user-level session hooks are wanted. The
+CLI never prompts.
 
 ## Workflow
 
