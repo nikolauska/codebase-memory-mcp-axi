@@ -7,11 +7,12 @@ description: >
 
 # cbm-axi
 
-Use the `cbm-axi` CLI for compact, structured TOON output. The user must
-install `codebase-memory-mcp` and `@nikolauska/cbm-axi` separately so both
-binaries are on `PATH`; the AXI never installs or manages the MCP server. Run
-`cbm-axi setup hooks` only when user-level session hooks are wanted. The CLI
-never prompts.
+Use the `cbm-axi` CLI for compact, structured TOON output. Install
+`codebase-memory-mcp` 0.10.2 or newer and `@nikolauska/cbm-axi` separately so
+both binaries are on `PATH`; the AXI never installs or manages the MCP server.
+For sustained exploration, users may run `codebase-memory-mcp daemon start`;
+the AXI does not manage that daemon. Run `cbm-axi setup hooks` only when
+user-level session hooks are wanted. The CLI never prompts.
 
 ## Workflow
 
@@ -26,6 +27,8 @@ never prompts.
 5. Use get_code_snippet after discovering an exact qualified name.
 6. Use trace_path, query_graph, get_architecture, or detect_changes for
    relationships and impact.
+7. Use `check_index_coverage` only when completeness matters or expected code
+   is absent from search; it is a best-effort signal, not proof of completeness.
 
 ## CLI commands
 
@@ -38,6 +41,7 @@ cbm-axi search_graph --project <project> --name-pattern ".*Handler.*"
 cbm-axi get_code_snippet --project <project> --qualified-name <qualified-name>
 cbm-axi trace_path --project <project> --function-name <name> --direction both
 cbm-axi get_architecture --project <project>
+cbm-axi check_index_coverage --project <project> --scopes .
 cbm-axi query_graph --project <project> \
   --query "MATCH (f:Function) RETURN f.name LIMIT 20"
 cbm-axi update --check
@@ -45,6 +49,9 @@ cbm-axi update --check
 
 Use `--fields` for a smaller projection and `--full` when a detail response
 reports truncation.
+
+`CALLS` means a callable invocation. Query `CALL_REFERENCE` as well when the
+task needs proven references to a callable passed as a value.
 
 Search results default to 20 rows; follow `has_more` and the emitted next-page
 guidance for more.

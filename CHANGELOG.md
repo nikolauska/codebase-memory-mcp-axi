@@ -4,6 +4,17 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Added `check_index_coverage` for on-demand v0.10 graph completeness checks.
+
+### Changed
+
+- Require `codebase-memory-mcp` 0.10.2 or newer and forward upstream CLI flags
+  directly.
+
 ## [0.5.0] - 2026-08-03
 
 ### Removed

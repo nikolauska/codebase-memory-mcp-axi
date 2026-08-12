@@ -1,6 +1,6 @@
 # cbm-axi
 
-Agent-oriented Node.js CLI for compact codebase-memory graph queries. It wraps the separately installed `codebase-memory-mcp` binary and uses [`axi-sdk-js`](https://www.npmjs.com/package/axi-sdk-js) for command dispatch, official TOON output, structured errors, updates, and optional agent hooks.
+Agent-oriented Node.js CLI for compact codebase-memory graph queries. It wraps a separately installed `codebase-memory-mcp` 0.10.2 or newer binary and uses [`axi-sdk-js`](https://www.npmjs.com/package/axi-sdk-js) for command dispatch, official TOON output, structured errors, updates, and optional agent hooks.
 
 ## Install
 
@@ -13,6 +13,14 @@ npm install --global @nikolauska/cbm-axi
 
 `cbm-axi` only detects and invokes `codebase-memory-mcp`; it never installs,
 downloads, updates, or otherwise manages the MCP server.
+
+For sustained exploration sessions, start the upstream daemon once to avoid per-command startup:
+
+```sh
+codebase-memory-mcp daemon start
+```
+
+`cbm-axi` does not start, stop, or manage that user-level daemon.
 
 Node.js 24 or newer is required. To build `cbm-axi` from source:
 
@@ -52,12 +60,16 @@ cbm-axi index_repository --repo-path "$PWD"
 cbm-axi search_graph --project <project> --query "resource command"
 cbm-axi get_code_snippet --project <project> --qualified-name <qualified-name> --full
 cbm-axi trace_path --project <project> --function-name <name> --direction both
+cbm-axi check_index_coverage --project <project> --scopes .
 cbm-axi get_architecture --project <project>
 cbm-axi query_graph --project <project> --query "MATCH (f:Function) RETURN f.name LIMIT 20"
 cbm-axi update --check
 ```
 
 All upstream MCP tools are available as matching subcommands. Use `cbm-axi tool <name>` for a forward-compatible invocation. Add `--fields a,b` for a smaller output projection and `--full` to disable detail truncation. Piped JSON and `--args-file` are passed through to the upstream CLI.
+
+`CALLS` represents callable invocations. Use `CALL_REFERENCE` when a Cypher query
+also needs proven references to callables passed as values.
 
 Errors are structured on stdout. Diagnostics stay on stderr. Exit codes are `0` for success, `1` for operational failures, and `2` for usage errors. `cbm-axi update` upgrades a global npm installation; use `cbm-axi update --check` for a read-only version check.
 
