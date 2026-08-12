@@ -25,7 +25,7 @@ test.afterEach(() => {
   process.exitCode = undefined;
 });
 
-test("serializes upstream flags and Windows paths", () => {
+test("preserves upstream flags and normalizes Windows paths", () => {
   assert.deepEqual(
     serializeToolArgs([
       "--repo-path",
@@ -35,7 +35,7 @@ test("serializes upstream flags and Windows paths", () => {
       "--semantic-query",
       '["send"]',
     ]),
-    ['{"repo_path":"C:/Users/niko/repo","depth":2,"semantic_query":["send"]}'],
+    ["--repo-path", "C:/Users/niko/repo", "--depth", "2", "--semantic-query", '["send"]'],
   );
 });
 
@@ -82,7 +82,7 @@ test("runs MCP tools through the SDK and compacts output", async () => {
     version: "0.3.0",
     stdout: io.stdout,
     backend: backend((args) => {
-      assert.deepEqual(args, ["cli", "--json", "search_graph", '{"project":"demo","limit":20}']);
+      assert.deepEqual(args, ["cli", "--json", "search_graph", "--project", "demo", "--limit", "20"]);
       return {
         stdout: JSON.stringify({
           structuredContent: {
@@ -172,7 +172,7 @@ test("forwards future tools through the tool command", async () => {
     version: "0.3.0",
     stdout: io.stdout,
     backend: backend((args) => {
-      assert.deepEqual(args, ["cli", "--json", "future_tool", '{"value":"ok"}']);
+      assert.deepEqual(args, ["cli", "--json", "future_tool", "--value", "ok"]);
       return { stdout: JSON.stringify({ structuredContent: { status: "ok" } }) };
     }),
   });

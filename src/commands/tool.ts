@@ -7,6 +7,7 @@ import type { BackendRunner, JsonObject } from "../shared.js";
 export const TOOL_NAMES = [
   "delete_project",
   "detect_changes",
+  "check_index_coverage",
   "get_architecture",
   "get_code_snippet",
   "get_graph_schema",
@@ -125,42 +126,17 @@ function defaultToolArgs(tool: string, args: string[]): string[] {
 }
 
 export function serializeToolArgs(args: string[]): string[] {
-  if (args.length === 0 || (args.length === 1 && isJson(args[0])) || args.includes("--args-file"))
-    return args;
-  const values: JsonObject = {};
-  for (let index = 0; index < args.length; index++) {
-    const arg = args[index];
-    if (!arg.startsWith("--")) validation(`unexpected argument: ${arg}`);
-    const equals = arg.indexOf("=");
-    const key = arg.slice(2, equals < 0 ? undefined : equals).replaceAll("-", "_");
-    let value: unknown;
-    if (equals >= 0) value = arg.slice(equals + 1);
-    else if (args[index + 1] === undefined || args[index + 1].startsWith("--")) value = true;
-    else value = args[++index];
-    values[key] = typeof value === "string" ? toolArgValue(key, value) : value;
-  }
-  return [JSON.stringify(values)];
+  return args.map((arg, index) => {
+    if (index > 0 && args[index - 1] === "--repo-path") return normalizeWindowsPath(arg);
+    if (arg.startsWith("--repo-path=")) return `--repo-path=${normalizeWindowsPath(arg.slice(12))}`;
+    return arg;
+  });
 }
 
-function toolArgValue(key: string, value: string): unknown {
-  if (key === "repo_path" && (/^[A-Za-z]:[\\/]/.test(value) || value.startsWith("\\\\"))) {
-    value = value.replaceAll("\\", "/");
-  }
-  if (
-    ["limit", "offset", "depth", "max_depth", "min_degree", "max_degree"].includes(key) &&
-    /^-?\d+$/.test(value)
-  ) {
-    return Number(value);
-  }
-  if (value.startsWith("[") || value.startsWith("{")) {
-    try {
-      return JSON.parse(value);
-    } catch {
-      // Keep malformed structured values as strings for backend validation.
-    }
-  }
-  if (value === "true" || value === "false") return value === "true";
-  return value;
+function normalizeWindowsPath(value: string): string {
+  return /^[A-Za-z]:[\\/]/.test(value) || value.startsWith("\\\\")
+    ? value.replaceAll("\\", "/")
+    : value;
 }
 
 function nextPageCommand(tool: string, args: string[]): string {
@@ -188,13 +164,4 @@ function splitFields(value: string): string[] {
     .split(",")
     .map((field) => field.trim())
     .filter(Boolean);
-}
-
-function isJson(value: string): boolean {
-  try {
-    JSON.parse(value);
-    return true;
-  } catch {
-    return false;
-  }
 }
