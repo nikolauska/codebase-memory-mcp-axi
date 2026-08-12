@@ -4,6 +4,36 @@ import { isObject, type BackendResult, type BackendRunner, type JsonObject } fro
 
 const BACKEND = "codebase-memory-mcp";
 
+const REQUIRED_BACKEND_VERSION = [0, 10, 2] as const;
+
+export function requireBackendVersion(backend: BackendRunner): BackendRunner {
+  let verification: Promise<void> | undefined;
+  return async (args, signal) => {
+    verification ??= verifyBackendVersion(backend, signal);
+    await verification;
+    return backend(args, signal);
+  };
+}
+
+async function verifyBackendVersion(backend: BackendRunner, signal?: AbortSignal): Promise<void> {
+  const result = await executeBackend(backend, ["--version"], false, signal);
+  const match = /(?:^|\s)v?(\d+)\.(\d+)\.(\d+)(?![-+])(?:\s|$)/.exec(result.stdout);
+  const version = match?.slice(1).map(Number);
+  if (
+    !version ||
+    version[0] < REQUIRED_BACKEND_VERSION[0] ||
+    (version[0] === REQUIRED_BACKEND_VERSION[0] &&
+      (version[1] < REQUIRED_BACKEND_VERSION[1] ||
+        (version[1] === REQUIRED_BACKEND_VERSION[1] &&
+          version[2] < REQUIRED_BACKEND_VERSION[2])))
+  ) {
+    operational(
+      "codebase-memory-mcp 0.10.2 or newer is required",
+      "Upgrade `codebase-memory-mcp` to version 0.10.2 or newer",
+    );
+  }
+}
+
 export const runBackend: BackendRunner = (args, signal) => {
   const { promise, resolve, reject } = Promise.withResolvers<BackendResult>();
   const child = spawn(BACKEND, args, {

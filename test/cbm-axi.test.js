@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
+import { requireBackendVersion } from "../dist/backend.js";
 import { run } from "../dist/cli.js";
 import { currentProject } from "../dist/commands/dashboard.js";
 import { serializeToolArgs } from "../dist/commands/tool.js";
@@ -14,7 +15,10 @@ function capture() {
 }
 
 function backend(handler) {
-  return async (args, signal) => ({ status: 0, stderr: "", ...handler(args, signal) });
+  return async (args, signal) => {
+    if (args[0] === "--version") return { status: 0, stderr: "", stdout: "codebase-memory-mcp 0.10.2\n" };
+    return { status: 0, stderr: "", ...handler(args, signal) };
+  };
 }
 
 test.afterEach(() => {
@@ -33,6 +37,28 @@ test("serializes upstream flags and Windows paths", () => {
     ]),
     ['{"repo_path":"C:/Users/niko/repo","depth":2,"semantic_query":["send"]}'],
   );
+});
+
+test("requires codebase-memory-mcp 0.10.2 or newer", async () => {
+  const calls = [];
+  const compatible = requireBackendVersion(async (args) => {
+    calls.push(args);
+    return { status: 0, stderr: "", stdout: "codebase-memory-mcp 0.10.2\n" };
+  });
+  await compatible(["cli", "--json", "list_projects"]);
+  assert.deepEqual(calls, [["--version"], ["cli", "--json", "list_projects"]]);
+
+  for (const version of ["0.10.1", "v0.10.2-rc.1", "not a version"]) {
+    const unsupported = requireBackendVersion(async () => ({
+      status: 0,
+      stderr: "",
+      stdout: `codebase-memory-mcp ${version}\n`,
+    }));
+    await assert.rejects(
+      unsupported(["cli", "--json", "list_projects"]),
+      /0\.10\.2 or newer/,
+    );
+  }
 });
 
 test("selects the closest indexed project", () => {

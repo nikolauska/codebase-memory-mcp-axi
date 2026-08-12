@@ -5,7 +5,7 @@ import {
   type AxiCliCommand,
   type InstallSessionStartHooksOptions,
 } from "axi-sdk-js";
-import { runBackend } from "./backend.js";
+import { requireBackendVersion, runBackend } from "./backend.js";
 import { dashboard } from "./commands/dashboard.js";
 import { commandHelp, createHelpCommand, TOP_LEVEL_HELP } from "./commands/help.js";
 import { createSetupCommand } from "./commands/setup.js";
@@ -24,7 +24,7 @@ export async function main(): Promise<void> {
 }
 
 export async function run(argv: string[], dependencies: RunDependencies = {}): Promise<void> {
-  const backend = dependencies.backend ?? runBackend;
+  const backend = requireBackendVersion(dependencies.backend ?? runBackend);
   const installHooks = dependencies.installHooks ?? installSessionStartHooks;
   const commands: Record<string, AxiCliCommand<undefined>> = {
     ...createToolCommands(backend),
