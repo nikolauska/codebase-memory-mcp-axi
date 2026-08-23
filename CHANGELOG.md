@@ -4,6 +4,14 @@
 
 All notable changes to this project are documented here.
 
+## [0.7.0] - 2026-08-23
+
+### Fixed
+
+- Use a backend runtime directory below `XDG_RUNTIME_DIR` so secure local
+  socket validation does not reject a world-writable `/tmp` parent, while
+  preserving explicit `CBM_RUNTIME_DIR` overrides.
+
 ## [0.6.0] - 2026-08-12
 
 ### Added
