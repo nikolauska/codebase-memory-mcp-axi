@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { operational } from "./errors.js";
 import { isObject, type BackendResult, type BackendRunner, type JsonObject } from "./shared.js";
@@ -66,13 +67,16 @@ export const runBackend: BackendRunner = (args, signal) => {
 };
 
 export function backendEnvironment(environment: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  let runtimeDirectory = environment.CBM_RUNTIME_DIR;
+  if (!runtimeDirectory && environment.XDG_RUNTIME_DIR) {
+    runtimeDirectory = join(environment.XDG_RUNTIME_DIR, "cbm-axi");
+    // A dedicated private directory keeps coordination files isolated from other applications.
+    mkdirSync(runtimeDirectory, { recursive: true, mode: 0o700 });
+  }
   return {
     ...environment,
     CBM_LOG_LEVEL: "none",
-    // The backend validates the runtime directory's parent, so keep it below the private user dir.
-    CBM_RUNTIME_DIR:
-      environment.CBM_RUNTIME_DIR ??
-      (environment.XDG_RUNTIME_DIR ? join(environment.XDG_RUNTIME_DIR, "cbm-axi") : undefined),
+    CBM_RUNTIME_DIR: runtimeDirectory,
   };
 }
 

@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import { backendEnvironment, requireBackendVersion } from "../dist/backend.js";
 import { run } from "../dist/cli.js";
@@ -59,11 +62,15 @@ test("requires codebase-memory-mcp 0.10.2 or newer", async () => {
   }
 });
 
-test("uses a runtime directory below a private parent", () => {
+test("creates a private runtime directory below XDG_RUNTIME_DIR", (t) => {
+  const runtimeParent = mkdtempSync(join(tmpdir(), "cbm-axi-test-"));
+  t.after(() => rmSync(runtimeParent, { recursive: true }));
+  const runtimeDirectory = join(runtimeParent, "cbm-axi");
   assert.equal(
-    backendEnvironment({ TMPDIR: "/tmp", XDG_RUNTIME_DIR: "/run/user/1000" }).CBM_RUNTIME_DIR,
-    "/run/user/1000/cbm-axi",
+    backendEnvironment({ TMPDIR: "/tmp", XDG_RUNTIME_DIR: runtimeParent }).CBM_RUNTIME_DIR,
+    runtimeDirectory,
   );
+  assert.equal(statSync(runtimeDirectory).mode & 0o777, 0o700);
   assert.equal(
     backendEnvironment({ CBM_RUNTIME_DIR: "/custom/runtime", XDG_RUNTIME_DIR: "/run/user/1000" })
       .CBM_RUNTIME_DIR,
@@ -197,10 +204,12 @@ test("forwards future tools through the tool command", async () => {
   assert.match(io.output(), /status: ok/);
 });
 
-test("reports how to install a missing MCP binary", () => {
+test("reports how to install a missing MCP binary", (t) => {
+  const runtimeParent = mkdtempSync(join(tmpdir(), "cbm-axi-test-"));
+  t.after(() => rmSync(runtimeParent, { recursive: true }));
   const result = spawnSync(process.execPath, ["dist/bin/cbm-axi.js", "list_projects"], {
     encoding: "utf8",
-    env: { ...process.env, PATH: "" },
+    env: { ...process.env, PATH: "", XDG_RUNTIME_DIR: runtimeParent },
   });
   assert.equal(result.status, 1);
   assert.match(result.stdout, /codebase-memory-mcp failed to start/);
