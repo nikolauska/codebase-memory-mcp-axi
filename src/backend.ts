@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { join } from "node:path";
 import { operational } from "./errors.js";
 import { isObject, type BackendResult, type BackendRunner, type JsonObject } from "./shared.js";
 
@@ -36,7 +37,7 @@ async function verifyBackendVersion(backend: BackendRunner, signal?: AbortSignal
 export const runBackend: BackendRunner = (args, signal) => {
   const { promise, resolve, reject } = Promise.withResolvers<BackendResult>();
   const child = spawn(BACKEND, args, {
-    env: { ...process.env, CBM_LOG_LEVEL: "none" },
+    env: backendEnvironment(process.env),
     stdio: ["inherit", "pipe", "pipe"],
   });
   let stdout = "";
@@ -63,6 +64,17 @@ export const runBackend: BackendRunner = (args, signal) => {
   });
   return promise;
 };
+
+export function backendEnvironment(environment: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return {
+    ...environment,
+    CBM_LOG_LEVEL: "none",
+    // The backend validates the runtime directory's parent, so keep it below the private user dir.
+    CBM_RUNTIME_DIR:
+      environment.CBM_RUNTIME_DIR ??
+      (environment.XDG_RUNTIME_DIR ? join(environment.XDG_RUNTIME_DIR, "cbm-axi") : undefined),
+  };
+}
 
 export async function executeBackend(
   backend: BackendRunner,

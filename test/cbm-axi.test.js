@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
-import { requireBackendVersion } from "../dist/backend.js";
+import { backendEnvironment, requireBackendVersion } from "../dist/backend.js";
 import { run } from "../dist/cli.js";
 import { currentProject } from "../dist/commands/dashboard.js";
 import { serializeToolArgs } from "../dist/commands/tool.js";
@@ -57,6 +57,18 @@ test("requires codebase-memory-mcp 0.10.2 or newer", async () => {
     }));
     await assert.rejects(unsupported(["cli", "--json", "list_projects"]), /0\.10\.2 or newer/);
   }
+});
+
+test("uses a runtime directory below a private parent", () => {
+  assert.equal(
+    backendEnvironment({ TMPDIR: "/tmp", XDG_RUNTIME_DIR: "/run/user/1000" }).CBM_RUNTIME_DIR,
+    "/run/user/1000/cbm-axi",
+  );
+  assert.equal(
+    backendEnvironment({ CBM_RUNTIME_DIR: "/custom/runtime", XDG_RUNTIME_DIR: "/run/user/1000" })
+      .CBM_RUNTIME_DIR,
+    "/custom/runtime",
+  );
 });
 
 test("selects the closest indexed project", () => {
