@@ -4,6 +4,13 @@
 
 All notable changes to this project are documented here.
 
+## [0.7.1] - 2026-08-23
+
+### Fixed
+
+- Create the private backend runtime directory before launching
+  `codebase-memory-mcp` so secure CLI coordination can create its endpoint.
+
 ## [0.7.0] - 2026-08-23
 
 ### Fixed
