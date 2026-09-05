@@ -36,12 +36,12 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "axi-sdk-js": "^0.1.10"
+    "axi-sdk-js": "^0.1.11"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
-    "oxfmt": "^0.63.0",
-    "oxlint": "^1.78.0",
+    "@types/node": "^26.4.1",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
     "typescript": "^7.0.2"
   }
 }
