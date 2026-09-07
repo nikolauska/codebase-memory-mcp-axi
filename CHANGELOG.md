@@ -4,6 +4,13 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- Let `codebase-memory-mcp` manage its runtime directory instead of creating
+  and selecting a wrapper-specific directory below `XDG_RUNTIME_DIR`.
+
 ## [0.7.1] - 2026-08-23
 
 ### Fixed

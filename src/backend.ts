@@ -1,6 +1,4 @@
 import { spawn } from "node:child_process";
-import { mkdirSync } from "node:fs";
-import { join } from "node:path";
 import { operational } from "./errors.js";
 import { isObject, type BackendResult, type BackendRunner, type JsonObject } from "./shared.js";
 
@@ -38,7 +36,8 @@ async function verifyBackendVersion(backend: BackendRunner, signal?: AbortSignal
 export const runBackend: BackendRunner = (args, signal) => {
   const { promise, resolve, reject } = Promise.withResolvers<BackendResult>();
   const child = spawn(BACKEND, args, {
-    env: backendEnvironment(process.env),
+    // Upstream owns runtime setup; only silence logs for structured CLI output.
+    env: { ...process.env, CBM_LOG_LEVEL: "none" },
     stdio: ["inherit", "pipe", "pipe"],
   });
   let stdout = "";
@@ -65,20 +64,6 @@ export const runBackend: BackendRunner = (args, signal) => {
   });
   return promise;
 };
-
-export function backendEnvironment(environment: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  let runtimeDirectory = environment.CBM_RUNTIME_DIR;
-  if (!runtimeDirectory && environment.XDG_RUNTIME_DIR) {
-    runtimeDirectory = join(environment.XDG_RUNTIME_DIR, "cbm-axi");
-    // A dedicated private directory keeps coordination files isolated from other applications.
-    mkdirSync(runtimeDirectory, { recursive: true, mode: 0o700 });
-  }
-  return {
-    ...environment,
-    CBM_LOG_LEVEL: "none",
-    CBM_RUNTIME_DIR: runtimeDirectory,
-  };
-}
 
 export async function executeBackend(
   backend: BackendRunner,
