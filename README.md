@@ -1,92 +1,41 @@
-# cbm-axi
+![cbm-axi](assets/cbm-axi.png)
 
-Agent-oriented Node.js CLI for compact codebase-memory graph queries. It wraps a separately installed `codebase-memory-mcp` 0.10.2 or newer binary and uses [`axi-sdk-js`](https://www.npmjs.com/package/axi-sdk-js) for command dispatch, official TOON output, structured errors, updates, and optional agent hooks.
+<h1 align="center">cbm-axi</h1>
+
+`cbm-axi` is an [Agent eXperience Interface (AXI)](https://github.com/kunchenguid/axi) for codebase-memory-mcp. It gives AI agents compact, structured commands for indexing and exploring source-code graphs.
 
 ## Install
 
-Install the MCP server and AXI as separate standalone binaries on `PATH`:
+cbm-axi requires Node.js 24 or newer and codebase-memory-mcp 0.10.2 or newer. Install both commands globally with npm:
 
 ```sh
 npm install --global codebase-memory-mcp
 npm install --global @nikolauska/cbm-axi
+cbm-axi --help
 ```
 
-`cbm-axi` only detects and invokes `codebase-memory-mcp`; it never installs,
-downloads, updates, or otherwise manages the MCP server.
-
-For sustained exploration sessions, start the upstream daemon once to avoid per-command startup:
+For sustained exploration sessions, start the upstream daemon separately:
 
 ```sh
 codebase-memory-mcp daemon start
 ```
 
-`cbm-axi` does not start, stop, or manage that user-level daemon.
+cbm-axi invokes the installed backend. It does not install, update, start, stop, or otherwise manage codebase-memory-mcp.
 
-Node.js 24 or newer is required. To build `cbm-axi` from source:
+## Install agent guidance
 
-```sh
-git clone https://github.com/nikolauska/codebase-memory-mcp-axi.git
-cd codebase-memory-mcp-axi
-npm ci
-npm run build
-npm install --global .
-```
-
-Session hooks are an explicit, optional integration:
+Install optional user-level session hooks for Claude Code, Codex, and OpenCode:
 
 ```sh
 cbm-axi setup hooks
 ```
 
-The command idempotently installs or repairs user-level session-start hooks for
-Claude Code, Codex, and OpenCode. Hooks resolve `cbm-axi` from `PATH` when it
-identifies the current executable and otherwise retain its absolute path.
-
-As a lower-overhead alternative, install the static [`cbm-axi` skill](skills/cbm-axi/SKILL.md):
+Alternatively, install the portable Agent Skill with the [Skills CLI](https://github.com/vercel-labs/skills):
 
 ```sh
 skills add nikolauska/codebase-memory-mcp-axi --skill cbm-axi
 ```
 
-Hooks provide ambient session context; the skill loads on demand. Install either
-integration or both after installing the standalone binaries.
+These options install agent guidance. The `cbm-axi` and `codebase-memory-mcp` commands must still be installed separately.
 
-## Use
-
-```sh
-cbm-axi
-cbm-axi list_projects
-cbm-axi index_repository --repo-path "$PWD"
-cbm-axi search_graph --project <project> --query "resource command"
-cbm-axi get_code_snippet --project <project> --qualified-name <qualified-name> --full
-cbm-axi trace_path --project <project> --function-name <name> --direction both
-cbm-axi check_index_coverage --project <project> --scopes .
-cbm-axi get_architecture --project <project>
-cbm-axi query_graph --project <project> --query "MATCH (f:Function) RETURN f.name LIMIT 20"
-cbm-axi update --check
-```
-
-All upstream MCP tools are available as matching subcommands. Use `cbm-axi tool <name>` for a forward-compatible invocation. Add `--fields a,b` for a smaller output projection and `--full` to disable detail truncation. Piped JSON and `--args-file` are passed through to the upstream CLI.
-
-`CALLS` represents callable invocations. Use `CALL_REFERENCE` when a Cypher query
-also needs proven references to callables passed as values.
-
-Errors are structured on stdout. Diagnostics stay on stderr. Exit codes are `0` for success, `1` for operational failures, and `2` for usage errors. `cbm-axi update` upgrades a global npm installation; use `cbm-axi update --check` for a read-only version check.
-
-## Develop
-
-Install the Node.js version pinned by [mise](https://mise.jdx.dev/):
-
-```sh
-mise install
-```
-
-Then install dependencies and run the npm scripts:
-
-```sh
-npm ci
-npm run lint
-npm test
-npm run build
-npm pack --dry-run
-```
+Read [how cbm-axi works](docs/domain/how-cbm-axi-works.md) for the product workflow and [CONTRIBUTING.md](CONTRIBUTING.md) to work on the project. For agent usage, see the [cbm-axi skill](skills/cbm-axi/SKILL.md).
