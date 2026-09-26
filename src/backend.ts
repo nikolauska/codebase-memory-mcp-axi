@@ -1,10 +1,10 @@
 import { spawn } from "node:child_process";
-import { operational } from "./errors.js";
+import { operational, validation } from "./errors.js";
 import { isObject, type BackendResult, type BackendRunner, type JsonObject } from "./shared.js";
 
 const BACKEND = "codebase-memory-mcp";
 
-const REQUIRED_BACKEND_VERSION = [0, 10, 2] as const;
+const REQUIRED_BACKEND_VERSION = [0, 11, 0] as const;
 
 export function requireBackendVersion(backend: BackendRunner): BackendRunner {
   let verification: Promise<void> | undefined;
@@ -27,8 +27,8 @@ async function verifyBackendVersion(backend: BackendRunner, signal?: AbortSignal
         (version[1] === REQUIRED_BACKEND_VERSION[1] && version[2] < REQUIRED_BACKEND_VERSION[2])))
   ) {
     operational(
-      "codebase-memory-mcp 0.10.2 or newer is required",
-      "Upgrade `codebase-memory-mcp` to version 0.10.2 or newer",
+      "codebase-memory-mcp 0.11.0 or newer is required",
+      "Upgrade `codebase-memory-mcp` to version 0.11.0 or newer",
     );
   }
 }
@@ -77,8 +77,21 @@ export async function executeBackend(
   } catch (error) {
     operational(error instanceof Error ? error.message : String(error));
   }
-  if (!allowFailure && result.status !== 0 && result.stderr.trim())
-    operational(result.stderr.trim());
+  if (!allowFailure && result.status !== 0 && result.stderr.trim()) {
+    const stderr = result.stderr.trim();
+    const unknownFlag = /unknown flag (\S+)/.exec(stderr);
+    if (unknownFlag) {
+      const tool =
+        args[0] === "cli"
+          ? args.find((arg, index) => index > 0 && !arg.startsWith("-"))
+          : undefined;
+      validation(
+        `unknown flag ${unknownFlag[1]}`,
+        `Run \`cbm-axi ${tool ? `${tool} ` : ""}--help\``,
+      );
+    }
+    operational(stderr);
+  }
   if (!allowFailure && result.status !== 0 && !result.stdout.trim())
     operational(`backend exited with status ${result.status}`);
   return result;
@@ -109,21 +122,36 @@ export function decodeBackendResult(result: BackendResult, tool: string): unknow
 
 function decodeBackendError(root: JsonObject, tool: string): unknown {
   const text = contentText(root);
-  if (text) {
-    let parsed: unknown;
+  let error: unknown = root.structuredContent;
+  if (!isObject(error)) {
     try {
-      parsed = JSON.parse(text);
+      error = JSON.parse(text);
     } catch {
       // The backend may return plain text instead of a structured error.
     }
-    if (isObject(parsed) && typeof parsed.error === "string") {
-      if (tool === "delete_project" && parsed.error.toLowerCase().includes("not found")) {
-        return { project: "already absent (no-op)" };
-      }
-      operational(parsed.error, typeof parsed.hint === "string" ? parsed.hint : undefined);
+  }
+  if (isObject(error)) {
+    // Deleting an absent project already satisfies the request.
+    if (tool === "delete_project" && error.status === "not_found") {
+      return { project: "already absent (no-op)" };
+    }
+    if (typeof error.error === "string") {
+      const help = `Run \`cbm-axi ${tool} --help\``;
+      // Upstream usage hints describe MCP JSON arguments; the cbm-axi help shows its flags.
+      if (isUsageError(error.error, error.code)) validation(error.error, help);
+      operational(error.error, typeof error.hint === "string" ? error.hint : help);
     }
   }
   operational(firstUsefulLine(text) || "backend request failed");
+}
+
+// Upstream has no uniform usage-error code, so known argument failures are matched by text
+// to give them the usage exit code instead of the operational one.
+function isUsageError(message: string, code: unknown): boolean {
+  return (
+    code === "invalid_arguments" ||
+    /^(missing required argument|unknown tool|invalid_cursor)|mutually exclusive/.test(message)
+  );
 }
 
 function contentText(value: JsonObject): string {

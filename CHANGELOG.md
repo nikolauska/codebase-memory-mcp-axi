@@ -4,6 +4,53 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Added `get_file_outline` and `compare_graphs` commands for the new
+  codebase-memory-mcp 0.11 tools.
+- Next-page commands now carry upstream offsets and cursors for every paged
+  list, including `search_code` results, `detect_changes` sections, snippet
+  members and source lines, ADR headings, and coverage paths.
+- Suggest the usual next command after non-empty `search_graph`,
+  `search_code`, `get_file_outline`, and `index_repository` results.
+- The dashboard flags an index built before generation tracking and puts its
+  rebuild command first.
+- The dashboard lists other projects indexed from the same directory and shows
+  the most recently indexed one.
+
+### Changed
+
+- Require `codebase-memory-mcp` 0.11.0 or newer.
+- Request JSON from the backend and render upstream column-and-row tables as
+  TOON tables. `--format` is now managed by cbm-axi and rejected as an argument.
+- Use upstream's lean default fields instead of cbm-axi column selections;
+  `--fields` now applies to the main result list only.
+- Stop previewing code snippet source, which upstream already bounds and
+  continues with `--start-line`.
+- Report backend argument errors as usage errors with exit code 2 and point
+  help at `cbm-axi <command> --help`.
+- Adapt tool help to cbm-axi usage and list the `--fields` and `--full` flags.
+- Top-level help now describes each command by the question it answers and
+  lists the rules for reading results, paging, exit codes, and state-changing
+  commands; each command's help adds command-specific notes.
+- Show only freshness and size in the dashboard; details stay in
+  `index_status`.
+- Drop upstream bookkeeping that repeats defaults or other fields, and round
+  search scores to four significant digits. `--full` keeps the complete
+  response.
+- Shortened the cbm-axi skill to point agents at the CLI help and dashboard,
+  keeping only the prerequisites and the commands that need the user's request.
+
+### Fixed
+
+- Fixed output against codebase-memory-mcp 0.11, whose default text layout
+  was shown as one truncated string.
+- Fixed the dashboard not finding the current project.
+- Fixed deleting an absent project failing instead of succeeding as a no-op.
+- Fixed raw JSON and `--args-file` requests losing flags that cbm-axi adds.
+
 ## [0.7.2] - 2026-09-07
 
 ### Fixed

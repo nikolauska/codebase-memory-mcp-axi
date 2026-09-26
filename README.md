@@ -6,7 +6,7 @@
 
 ## Install
 
-cbm-axi requires Node.js 24 or newer and codebase-memory-mcp 0.10.2 or newer. Install both commands globally with npm:
+cbm-axi requires Node.js 24 or newer and codebase-memory-mcp 0.11.0 or newer. Install both commands globally with npm:
 
 ```sh
 npm install --global codebase-memory-mcp
