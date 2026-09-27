@@ -1,9 +1,13 @@
 ---
 name: cbm-axi
 description: >
-  Query codebase-memory-mcp code graphs with the cbm-axi CLI to find symbols,
-  read exact source, trace callers and callees, and estimate change impact. Use
-  in repositories indexed, or to be indexed, by codebase-memory-mcp.
+  Search and navigate code with the cbm-axi CLI more efficiently than grep and
+  whole-file reads: find definitions and usages, search text with its
+  enclosing symbol, outline files, read one symbol's source, trace callers and
+  callees, map architecture, and estimate change impact. Use for questions like
+  where something is defined, what calls it, how a feature works, or what a
+  change affects. For a known file or a small local edit, read the file
+  directly.
 ---
 
 # cbm-axi
