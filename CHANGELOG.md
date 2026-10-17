@@ -12,10 +12,10 @@ All notable changes to this project are documented here.
 - After `index_repository --async true`, or `--status true` on a running job,
   suggest the status command to poll instead of searches on a graph that is not
   ready yet.
-- Command help covers the codebase-memory-mcp 0.12 additions: `detect_changes
---scope tests` and `--seeds list`, `trace_path` infrastructure modes,
-  `search_graph --kind` and `--namespace`, `SPAWNS` and `MENTIONS` edges, and
-  async indexing.
+- Command help covers the codebase-memory-mcp 0.12 additions:
+  `detect_changes --scope tests` and `--seeds list`, `trace_path`
+  infrastructure modes, `search_graph --kind` and `--namespace`, `SPAWNS` and
+  `MENTIONS` edges, and async indexing.
 
 ### Changed
 
