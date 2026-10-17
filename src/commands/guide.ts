@@ -12,6 +12,7 @@ export const TOOL_GUIDE: Record<ToolName, { summary: string; notes?: string[] }>
     notes: [
       "--semantic-query takes a JSON array of phrases, e.g. --semantic-query '[\"retry failed upload\"]'",
       "Results default to 20; the qn column is the --qualified-name for get_code_snippet",
+      "--kind and --namespace filter infrastructure resources such as Kubernetes objects",
     ],
   },
   search_code: {
@@ -27,9 +28,15 @@ export const TOOL_GUIDE: Record<ToolName, { summary: string; notes?: string[] }>
   },
   trace_path: {
     summary: "Show callers and callees (--function-name <name> --direction inbound|outbound|both)",
+    notes: ["--mode run, deploy, or topology follows infrastructure instead of calls"],
   },
   detect_changes: {
     summary: "List changed files and affected symbols (--since <ref> or --base-branch <branch>)",
+    notes: [
+      "--scope tests names the tests a change can reach; it is experimental",
+      "A run_all decision means the graph could not narrow the tests; run every test",
+      "--seeds list shows the changed symbols the impact walk starts from",
+    ],
   },
   get_architecture: {
     summary: "Summarize languages, packages, and entry points; more via --aspects",
@@ -42,6 +49,8 @@ export const TOOL_GUIDE: Record<ToolName, { summary: string; notes?: string[] }>
     notes: [
       "Run get_graph_schema --diagnostics full for labels, edge types, and properties",
       "CALLS edges are invocations; also match CALL_REFERENCE when a callable passed as a value counts as a use",
+      "Program launches are SPAWNS edges, not CALLS",
+      "Docs and doc comments link to the code they name through MENTIONS edges",
     ],
   },
   compare_graphs: {
@@ -60,6 +69,7 @@ export const TOOL_GUIDE: Record<ToolName, { summary: string; notes?: string[] }>
     summary: "Index or re-index a repository (--repo-path)",
     notes: [
       "A first index of a large repository can take minutes",
+      "With a running codebase-memory-mcp daemon, --async true returns at once; poll with --status true",
       "If the user cache is not writable, ask the user before retrying with elevated filesystem access",
     ],
   },

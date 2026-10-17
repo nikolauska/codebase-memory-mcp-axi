@@ -1,3 +1,6 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { AxiCliCommand } from "axi-sdk-js";
 import { decodeBackendResult, executeBackend } from "../backend.js";
 import { operational, validation } from "../errors.js";
@@ -120,14 +123,25 @@ export async function toolCommand(
     help.push(`Run \`${next.command(tool)}${fieldsFlag}\` for more ${label}`);
   }
   if (shaped.empty) help.push(`Run \`cbm-axi ${tool} --help\` for filters`);
-  else {
-    for (const [command, purpose] of NEXT_STEPS[tool] ?? []) {
-      const scoped = command.replace("{project}", project ? shellQuote(project) : "<project>");
-      help.push(`Run \`cbm-axi ${scoped}\` ${purpose}`);
-    }
-  }
+  else if (isObject(value) && typeof value.state === "string") {
+    // Only async starts and status checks report a job state. Until the job succeeds the
+    // graph is unchanged, so poll instead of suggesting searches.
+    if (typeof value.poll === "string") {
+      const poll = toolArgs.with({ async: undefined, status: true }).command(tool);
+      help.push(`Run \`${poll}${fieldsFlag}\` until state is succeeded, failed, or cancelled`);
+      // Upstream's poll text describes MCP arguments; the help line above is the cbm-axi form.
+      if (!parsed.full) delete shaped.output.poll;
+    } else if (value.state === "succeeded") help.push(...nextSteps(tool, project));
+  } else help.push(...nextSteps(tool, project));
   if (help.length > 0) shaped.output.help = help;
   return shaped.output;
+}
+
+function nextSteps(tool: string, project: string | undefined): string[] {
+  return (NEXT_STEPS[tool] ?? []).map(([command, purpose]) => {
+    const scoped = command.replace("{project}", project ? shellQuote(project) : "<project>");
+    return `Run \`cbm-axi ${scoped}\` ${purpose}`;
+  });
 }
 
 export async function requestTool(
@@ -144,8 +158,21 @@ export async function requestTool(
       );
     request = args.with({ format: "json" });
   }
-  const result = await executeBackend(backend, ["cli", "--json", tool, ...request.backendArgs()]);
-  return decodeBackendResult(result, tool);
+  const inline = request.inlineJson();
+  if (inline === undefined) {
+    const result = await executeBackend(backend, ["cli", "--json", tool, ...request.backendArgs()]);
+    return decodeBackendResult(result, tool);
+  }
+  const directory = await mkdtemp(join(tmpdir(), "cbm-axi-"));
+  try {
+    const file = join(directory, "args.json");
+    // Arguments can carry trace data or ADR text, so only the current user may read them.
+    await writeFile(file, inline, { mode: 0o600 });
+    const result = await executeBackend(backend, ["cli", "--json", tool, "--args-file", file]);
+    return decodeBackendResult(result, tool);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 }
 
 async function toolHelp(tool: string, backend: BackendRunner): Promise<string> {

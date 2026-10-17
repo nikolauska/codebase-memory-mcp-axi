@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { requireBackendVersion } from "../dist/backend.js";
 import { run } from "../dist/cli.js";
@@ -17,7 +18,7 @@ function capture() {
 function backend(handler) {
   return async (args, signal) => {
     if (args[0] === "--version")
-      return { status: 0, stderr: "", stdout: "codebase-memory-mcp 0.11.0\n" };
+      return { status: 0, stderr: "", stdout: "codebase-memory-mcp 0.12.0\n" };
     return { status: 0, stderr: "", ...handler(args, signal) };
   };
 }
@@ -54,23 +55,32 @@ test("preserves upstream flags and normalizes Windows paths", () => {
   );
 });
 
-test("requires codebase-memory-mcp 0.11.0 or newer", async () => {
+test("requires codebase-memory-mcp 0.12.0 or newer", async () => {
   const calls = [];
   const compatible = requireBackendVersion(async (args) => {
     calls.push(args);
-    return { status: 0, stderr: "", stdout: "codebase-memory-mcp 0.11.0\n" };
+    return { status: 0, stderr: "", stdout: "codebase-memory-mcp 0.12.0\n" };
   });
   await compatible(["cli", "--json", "list_projects"]);
   assert.deepEqual(calls, [["--version"], ["cli", "--json", "list_projects"]]);
 
-  for (const version of ["0.10.8", "v0.11.0-rc.1", "not a version"]) {
+  for (const version of ["0.11.0", "v0.12.0-rc.1", "not a version"]) {
     const unsupported = requireBackendVersion(async () => ({
       status: 0,
       stderr: "",
       stdout: `codebase-memory-mcp ${version}\n`,
     }));
-    await assert.rejects(unsupported(["cli", "--json", "list_projects"]), /0\.11\.0 or newer/);
+    await assert.rejects(unsupported(["cli", "--json", "list_projects"]), /0\.12\.0 or newer/);
   }
+
+  // The upgrade hint must survive the tool command's own backend error handling.
+  const io = capture();
+  await run(["list_projects"], {
+    version: "0.8.0",
+    stdout: io.stdout,
+    backend: async () => ({ status: 0, stderr: "", stdout: "codebase-memory-mcp 0.11.0\n" }),
+  });
+  assert.match(io.output(), /Upgrade `codebase-memory-mcp` to version 0\.12\.0 or newer/);
 });
 
 test("selects every project on the closest indexed root", () => {
@@ -174,22 +184,90 @@ test("rebuilds qualified names in grouped rows and replaces the previous cursor"
   assert.doesNotMatch(output, /old/);
 });
 
-test("edits raw JSON arguments in place because the backend ignores extra flags", async () => {
+test("edits raw JSON arguments in place and sends them through an args file", async () => {
+  let argsFile;
   const output = await runWith(["search_graph", '{"project":"demo","query":"x"}'], (args) => {
-    assert.deepEqual(args, [
-      "cli",
-      "--json",
-      "search_graph",
+    // Upstream deprecated positional raw JSON, so it must arrive as --args-file.
+    assert.deepEqual(args.slice(0, 4), ["cli", "--json", "search_graph", "--args-file"]);
+    argsFile = args[4];
+    assert.equal(
+      readFileSync(argsFile, "utf8"),
       '{"project":"demo","query":"x","limit":20,"format":"json"}',
-    ]);
+    );
     return {
       stdout: structured({ cols: ["qn"], rows: [["demo.X"]], has_more: true, next_offset: 20 }),
     };
   });
+  assert.equal(existsSync(argsFile), false);
   assert.match(
     output,
     /'\{\\"project\\":\\"demo\\",\\"query\\":\\"x\\",\\"limit\\":20,\\"offset\\":20\}'/,
   );
+});
+
+test("reports a backend crash instead of suggesting the backend is missing", async () => {
+  const output = await runWith(["list_projects"], () => ({
+    status: 1,
+    stdout: "",
+    signal: "SIGSEGV",
+  }));
+  assert.equal(process.exitCode, 1);
+  assert.match(output, /codebase-memory-mcp crashed \(SIGSEGV\)/);
+  assert.match(output, /codebase-memory-mcp --version/);
+  assert.doesNotMatch(output, /ensure it is on `PATH`/);
+});
+
+test("continues detect_changes seeds by their own cursor", async () => {
+  const output = await runWith(
+    ["detect_changes", "--project", "demo", "--seeds", "list", "--seed-limit", "1"],
+    () => ({
+      stdout: structured({
+        seeds: [{ qn: "demo.a", seed_reason: "hunk" }],
+        seed_has_more: true,
+        seed_next_offset: 1,
+        seed_next_cursor: "s1.next",
+        impacted: [],
+        impacted_has_more: false,
+      }),
+    }),
+  );
+  assert.match(output, /--seed-limit 1 --seed-cursor s1\.next` for more seeds/);
+  assert.doesNotMatch(output, /seed_next/);
+});
+
+test("polls a running index job instead of suggesting searches", async () => {
+  const running = await runWith(
+    ["index_repository", "--repo-path", "/repo", "--async", "true"],
+    () => ({
+      stdout: structured({
+        project: "repo",
+        state: "queued",
+        async: true,
+        poll: "call index_repository with the same repo_path and status: true",
+      }),
+    }),
+  );
+  assert.match(
+    running,
+    /Run `cbm-axi index_repository --repo-path \/repo --status true` until state is succeeded/,
+  );
+  assert.doesNotMatch(running, /search_graph|poll:/);
+
+  const idle = await runWith(
+    ["index_repository", "--repo-path", "/repo", "--status", "true"],
+    () => ({
+      stdout: structured({ project: "repo", state: "idle" }),
+    }),
+  );
+  assert.doesNotMatch(idle, /help/);
+
+  const done = await runWith(
+    ["index_repository", "--repo-path", "/repo", "--status", "true"],
+    () => ({
+      stdout: structured({ project: "repo", state: "succeeded" }),
+    }),
+  );
+  assert.match(done, /search_graph --project repo/);
 });
 
 test("rejects --format because cbm-axi owns the output format", async () => {

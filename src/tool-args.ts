@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { validation } from "./errors.js";
 import { isObject, type JsonObject } from "./shared.js";
 
-type ArgValue = string | number;
+type ArgValue = string | number | boolean;
 
 /**
  * Upstream tool arguments in whichever form the caller used: CLI flags, one raw JSON
@@ -74,15 +74,22 @@ export class ToolArgs {
     return new ToolArgs(flags, undefined, undefined);
   }
 
+  /**
+   * Inline JSON to send through a temporary args file. Upstream deprecated positional raw
+   * JSON and prints a warning that would otherwise replace the real error of a failed call.
+   */
+  inlineJson(): string | undefined {
+    if (!this.json || this.file !== undefined) return undefined;
+    const json =
+      typeof this.json.repo_path === "string"
+        ? { ...this.json, repo_path: normalizeWindowsPath(this.json.repo_path) }
+        : this.json;
+    return JSON.stringify(json);
+  }
+
+  /** Flags or the caller's own args file; check `inlineJson` first. */
   backendArgs(): string[] {
     if (this.file !== undefined) return ["--args-file", this.file];
-    if (this.json) {
-      const json =
-        typeof this.json.repo_path === "string"
-          ? { ...this.json, repo_path: normalizeWindowsPath(this.json.repo_path) }
-          : this.json;
-      return [JSON.stringify(json)];
-    }
     return serializeToolArgs(this.flags);
   }
 

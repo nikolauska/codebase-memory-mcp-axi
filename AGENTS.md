@@ -3,7 +3,7 @@
 
 ## Working on cbm-axi
 
-This is a Node.js 24+ CLI for querying an independently installed `codebase-memory-mcp` backend (0.11.0+). It returns compact TOON through `axi-sdk-js`; it does not install or manage the backend. Use npm and the committed `package-lock.json`, not another package manager. Prefer Node standard-library APIs; add runtime dependencies only when needed and update the lockfile with the manifest.
+This is a Node.js 24+ CLI for querying an independently installed `codebase-memory-mcp` backend (0.12.0+). It returns compact TOON through `axi-sdk-js`; it does not install or manage the backend. Use npm and the committed `package-lock.json`, not another package manager. Prefer Node standard-library APIs; add runtime dependencies only when needed and update the lockfile with the manifest.
 
 - `src/cli.ts` registers commands through `runAxiCli`; command implementations live in `src/commands/`. Return structured values and use SDK errors rather than formatting CLI output by hand.
 - `src/backend.ts` owns backend process invocation, version checks, and JSON-envelope decoding. Keep output projection and truncation separate from subprocess handling. Keep backend diagnostics out of successful structured output and disable upstream logging in the child environment.

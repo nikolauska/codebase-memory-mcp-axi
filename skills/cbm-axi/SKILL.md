@@ -12,7 +12,7 @@ description: >
 
 # cbm-axi
 
-`cbm-axi` wraps an installed `codebase-memory-mcp` (0.11.0 or newer) and prints
+`cbm-axi` wraps an installed `codebase-memory-mcp` (0.12.0 or newer) and prints
 compact TOON. Both binaries must already be on `PATH`; cbm-axi never installs
 or manages the backend, and it never prompts.
 
