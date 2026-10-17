@@ -1,10 +1,11 @@
 import { spawn } from "node:child_process";
+import { AxiError } from "axi-sdk-js";
 import { operational, validation } from "./errors.js";
 import { isObject, type BackendResult, type BackendRunner, type JsonObject } from "./shared.js";
 
 const BACKEND = "codebase-memory-mcp";
 
-const REQUIRED_BACKEND_VERSION = [0, 11, 0] as const;
+const REQUIRED_BACKEND_VERSION = [0, 12, 0] as const;
 
 export function requireBackendVersion(backend: BackendRunner): BackendRunner {
   let verification: Promise<void> | undefined;
@@ -27,8 +28,8 @@ async function verifyBackendVersion(backend: BackendRunner, signal?: AbortSignal
         (version[1] === REQUIRED_BACKEND_VERSION[1] && version[2] < REQUIRED_BACKEND_VERSION[2])))
   ) {
     operational(
-      "codebase-memory-mcp 0.11.0 or newer is required",
-      "Upgrade `codebase-memory-mcp` to version 0.11.0 or newer",
+      "codebase-memory-mcp 0.12.0 or newer is required",
+      "Upgrade `codebase-memory-mcp` to version 0.12.0 or newer",
     );
   }
 }
@@ -52,7 +53,7 @@ export const runBackend: BackendRunner = (args, signal) => {
   child.stdout.setEncoding("utf8").on("data", (chunk: string) => (stdout += chunk));
   child.stderr.setEncoding("utf8").on("data", (chunk: string) => (stderr += chunk));
   child.once("error", (error) => reject(new Error(`${BACKEND} failed to start: ${error.message}`)));
-  child.once("close", (status) => {
+  child.once("close", (status, exitSignal) => {
     signal?.removeEventListener("abort", abort);
     if (aborted) {
       reject(
@@ -60,7 +61,7 @@ export const runBackend: BackendRunner = (args, signal) => {
       );
       return;
     }
-    resolve({ stdout, stderr, status: status ?? 1 });
+    resolve({ stdout, stderr, status: status ?? 1, ...(exitSignal && { signal: exitSignal }) });
   });
   return promise;
 };
@@ -75,7 +76,16 @@ export async function executeBackend(
   try {
     result = await backend(args, signal);
   } catch (error) {
+    // A wrapped runner (the version check) already reports its own recovery hint.
+    if (error instanceof AxiError) throw error;
     operational(error instanceof Error ? error.message : String(error));
+  }
+  // A crash leaves no output, and the default install hint would wrongly suggest it is missing.
+  if (!allowFailure && result.signal) {
+    operational(
+      `${BACKEND} crashed (${result.signal})`,
+      `Check that \`${BACKEND} --version\` runs; if it also crashes, reinstall ${BACKEND} or try another build of it`,
+    );
   }
   if (!allowFailure && result.status !== 0 && result.stderr.trim()) {
     const stderr = result.stderr.trim();

@@ -83,6 +83,14 @@ const PAGES: Record<string, PageSpec[]> = {
       cursorArg: "impact_cursor",
     },
     {
+      key: "seeds",
+      more: "seed_has_more",
+      next: "seed_next_offset",
+      offset: "seed_offset",
+      cursor: "seed_next_cursor",
+      cursorArg: "seed_cursor",
+    },
+    {
       key: "impacted_modules",
       more: "module_has_more",
       next: "module_next_offset",

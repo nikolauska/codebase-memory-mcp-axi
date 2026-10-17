@@ -4,6 +4,33 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+### Added
+
+- `detect_changes --seeds list` now gets a next-page command for its seeds.
+- After `index_repository --async true`, or `--status true` on a running job,
+  suggest the status command to poll instead of searches on a graph that is not
+  ready yet.
+- Command help covers the codebase-memory-mcp 0.12 additions: `detect_changes
+--scope tests` and `--seeds list`, `trace_path` infrastructure modes,
+  `search_graph --kind` and `--namespace`, `SPAWNS` and `MENTIONS` edges, and
+  async indexing.
+
+### Changed
+
+- Require `codebase-memory-mcp` 0.12.0 or newer.
+- Send raw JSON arguments to the backend through a temporary `--args-file`,
+  because upstream deprecated positional raw JSON.
+
+### Fixed
+
+- A failed call with raw JSON arguments reported upstream's deprecation warning
+  instead of the real error.
+- A backend crash is reported as a crash with its signal instead of as a
+  missing installation.
+- The version check's upgrade hint was replaced by the generic install hint.
+
 ## [0.8.0] - 2026-09-26
 
 ### Added
